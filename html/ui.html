@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Car HUD</title>
+  <style>
+    body {
+      margin: 0;
+      background: none;
+      font-family: 'Inter', sans-serif; /* Changed font to Inter */
+      overflow: hidden; /* Prevent scrollbars */
+    }
+
+    #hud {
+      position: absolute;
+      bottom: 5%;
+      left: 90%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.6);
+      padding: 15px 25px;
+      border-radius: 15px;
+      color: #fff;
+      font-size: 16px;
+      display: none;
+      flex-direction: column;
+      gap: 15px;
+      align-items: stretch;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      transition: all 0.1s ease-out; /* Smooth transitions for movement and scale */
+    }
+
+    .hud-top-row {
+      display: flex;
+      gap: 30px;
+      justify-content: center;
+    }
+
+    .hud-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .fuel-section {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .fuel-icon {
+      width: 24px;
+      height: 24px;
+    }
+
+    .fuel-bar {
+      flex-grow: 1;
+      height: 14px;
+      background: #333;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .fuel-level {
+      height: 100%;
+      background: #FFBF00;
+      width: 100%;
+    }
+
+    .label {
+      font-size: 14px;
+      opacity: 0.8;
+    }
+
+    .value {
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    /* Notification styles */
+    #notifications {
+      position: absolute;
+      top: 2%;
+      right: 2%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 300px;
+      z-index: 1000;
+    }
+
+    .notification {
+      background: rgba(0, 0, 0, 0.6);
+      color: #fff;
+      padding: 10px 15px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      animation: fadeIn 0.8s ease-out;
+      opacity: 0;
+      transition: opacity 0.8s ease-out;
+    }
+
+    .notification.success {
+      border-left: 5px solid #4CAF50;
+    }
+
+    .notification.error {
+      border-left: 5px solid #F44336;
+    }
+
+    .notification.warning {
+      border-left: 5px solid #FFC107;
+      color: #333; /* Darker text for warning */
+      background: rgba(255, 193, 7, 0.9);
+    }
+
+    .notification.info {
+      border-left: 5px solid #2196F3;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .notification.hide {
+      opacity: 0;
+      transform: translateY(-20px);
+      transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+    }
+
+    /* HUD Settings Menu Styles */
+    #hud-settings {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.8);
+      padding: 30px;
+      border-radius: 20px;
+      color: #fff;
+      display: none; /* Hidden by default */
+      flex-direction: column;
+      gap: 20px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.7);
+      width: 350px;
+      max-width: 90%;
+      z-index: 1001; /* Above HUD and notifications */
+    }
+
+    #hud-settings h2 {
+      text-align: center;
+      color: #ff0000;
+      margin-bottom: 20px;
+      font-size: 24px;
+    }
+
+    .setting-item {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .setting-item label {
+      font-size: 16px;
+      color: #ffffff;
+    }
+
+    .setting-item input[type="range"] {
+      width: 100%;
+      height: 8px;
+      background: #555;
+      border-radius: 5px;
+      outline: none;
+      opacity: 0.9;
+      transition: opacity .2s;
+    }
+
+    .setting-item input[type="range"]::-webkit-slider-thumb {
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      background: #ffffff;
+      border-radius: 50%;
+      cursor: grab;
+      box-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
+    }
+
+    .setting-item input[type="range"]::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      background: #ffffff;
+      border-radius: 50%;
+      cursor: grab;
+      box-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
+    }
+
+    .button-group {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 20px;
+    }
+
+    .settings-button {
+      padding: 12px 25px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+
+    .settings-button.save {
+      background-color: #4CAF50; /* Green for Save */
+      color: white;
+    }
+
+    .settings-button.save:hover {
+      background-color: #45a049;
+      transform: translateY(-2px);
+    }
+
+    .settings-button.reset {
+      background-color: #F44336; /* Red for Reset */
+      color: white;
+    }
+
+    .settings-button.reset:hover {
+      background-color: #da190b;
+      transform: translateY(-2px);
+    }
+
+    .settings-button.close {
+      background-color: #555; /* Grey for Close */
+      color: white;
+    }
+
+    .settings-button.close:hover {
+      background-color: #333;
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+<div id="hud">
+  <div class="hud-top-row">
+    <div class="hud-section">
+      <div class="label">MPH</div>
+      <div class="value" id="mph">0</div>
+    </div>
+
+    <div class="hud-section">
+      <div class="label">GEAR</div>
+      <div class="value" id="gear">N</div>
+    </div>
+
+    <div class="hud-section">
+      <div class="label">RPM</div>
+      <div class="value" id="rpm">0</div>
+    </div>
+
+    <div class="hud-section">
+      <div class="label">SEATBELT</div>
+      <div class="value" id="seatbelt">OFF</div>
+    </div>
+  </div>
+
+  <div class="fuel-section">
+    <img src="fuel-icon.png" alt="Fuel" class="fuel-icon" />
+    <div class="bar fuel-bar">
+      <div class="fuel-level" id="fuelBar"></div>
+    </div>
+  </div>
+</div>
+
+<div id="notifications"></div>
+
+<!-- HUD Settings Menu -->
+<div id="hud-settings">
+  <h2>HUD Settings</h2>
+  <div class="setting-item">
+    <label for="hud-scale">Scale: <span id="scale-value">100%</span></label>
+    <input type="range" id="hud-scale" min="50" max="150" value="100">
+  </div>
+  <div class="setting-item">
+    <label for="hud-bottom">Vertical Position: <span id="bottom-value">5%</span></label>
+    <input type="range" id="hud-bottom" min="0" max="95" value="5">
+  </div>
+  <div class="setting-item">
+    <label for="hud-left">Horizontal Position: <span id="left-value">90%</span></label>
+    <input type="range" id="hud-left" min="5" max="95" value="90">
+  </div>
+  <div class="button-group">
+    <button class="settings-button save" id="save-settings">Save</button>
+    <button class="settings-button reset" id="reset-settings">Reset</button>
+    <button class="settings-button close" id="close-settings">Close</button>
+  </div>
+</div>
+
+  <audio id="buckle" src="nui://DANIELGDM180_hud/html/sounds/buckle.ogg"></audio>
+  <audio id="unbuckle" src="nui://DANIELGDM180_hud/html/sounds/unbuckle.ogg"></audio>
+
+  <script>
+    const hud = document.getElementById("hud");
+    const hudSettings = document.getElementById("hud-settings");
+    const notificationsContainer = document.getElementById("notifications");
+
+    const hudScaleSlider = document.getElementById("hud-scale");
+    const hudBottomSlider = document.getElementById("hud-bottom");
+    const hudLeftSlider = document.getElementById("hud-left");
+
+    const scaleValueSpan = document.getElementById("scale-value");
+    const bottomValueSpan = document.getElementById("bottom-value");
+    const leftValueSpan = document.getElementById("left-value");
+
+    let currentHudSettings = {
+      scale: 1.0,
+      bottom: 5,
+      left: 90
+    };
+
+    // Function to apply HUD settings
+    function applyHudSettings(settings) {
+      hud.style.transform = `translateX(-50%) scale(${settings.scale})`;
+      hud.style.bottom = `${settings.bottom}%`;
+      hud.style.left = `${settings.left}%`;
+
+      // Update slider values and spans
+      hudScaleSlider.value = settings.scale * 100;
+      hudBottomSlider.value = settings.bottom;
+      hudLeftSlider.value = settings.left;
+
+      scaleValueSpan.innerText = `${Math.round(settings.scale * 100)}%`;
+      bottomValueSpan.innerText = `${settings.bottom}%`;
+      leftValueSpan.innerText = `${settings.left}%`;
+    }
+
+    // Event listeners for sliders
+    hudScaleSlider.addEventListener("input", (e) => {
+      const scale = parseFloat(e.target.value) / 100;
+      currentHudSettings.scale = scale;
+      hud.style.transform = `translateX(-50%) scale(${scale})`;
+      scaleValueSpan.innerText = `${e.target.value}%`;
+    });
+
+    hudBottomSlider.addEventListener("input", (e) => {
+      const bottom = parseFloat(e.target.value);
+      currentHudSettings.bottom = bottom;
+      hud.style.bottom = `${bottom}%`;
+      bottomValueSpan.innerText = `${bottom}%`;
+    });
+
+    hudLeftSlider.addEventListener("input", (e) => {
+      const left = parseFloat(e.target.value);
+      currentHudSettings.left = left;
+      hud.style.left = `${left}%`;
+      leftValueSpan.innerText = `${left}%`;
+    });
+
+    // Save settings button
+    document.getElementById("save-settings").addEventListener("click", () => {
+      fetch(`https://${GetParentResourceName()}/saveHudSettings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: JSON.stringify(currentHudSettings),
+      }).then(resp => resp.json()).then(resp => console.log(resp));
+      hudSettings.style.display = "none";
+      fetch(`https://${GetParentResourceName()}/closeUI`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: JSON.stringify({}),
+      });
+    });
+
+    // Reset settings button
+    document.getElementById("reset-settings").addEventListener("click", () => {
+      const defaultSettings = { scale: 1.0, bottom: 5, left: 90 };
+      applyHudSettings(defaultSettings);
+      currentHudSettings = { ...defaultSettings }; // Update current settings to default
+      fetch(`https://${GetParentResourceName()}/resetHudSettings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: JSON.stringify({}),
+      }).then(resp => resp.json()).then(resp => console.log(resp));
+      hudSettings.style.display = "none";
+      fetch(`https://${GetParentResourceName()}/closeUI`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: JSON.stringify({}),
+      });
+    });
+
+    // Close settings button
+    document.getElementById("close-settings").addEventListener("click", () => {
+      hudSettings.style.display = "none";
+      fetch(`https://${GetParentResourceName()}/closeUI`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: JSON.stringify({}),
+      });
+    });
+
+    window.addEventListener("message", function (event) {
+      const data = event.data;
+      
+      if (data.type === "hud") {
+        hud.style.display = data.display ? "flex" : "none";
+        if (data.display) {
+          document.getElementById("mph").innerText = data.speed;
+          document.getElementById("fuelBar").style.width = `${data.fuel}%`;
+          document.getElementById("seatbelt").innerText = data.seatbelt ? "ON" : "OFF";
+          document.getElementById("gear").innerText = data.gear === 0 ? "R" : (data.gear === -1 ? "P" : data.gear);
+          document.getElementById("rpm").innerText = data.rpm;
+        }
+      } else if (data.type === "seatbelt") {
+        document.getElementById("seatbelt").innerText = data.status ? "ON" : "OFF";
+        
+        if (data.playSound) {
+          const audio = document.getElementById(data.playSound);
+          if (audio) audio.play();
+        }
+      } else if (data.type === "notification") {
+        const notification = document.createElement("div");
+        notification.classList.add("notification");
+        if (data.notificationType) {
+          notification.classList.add(data.notificationType);
+        }
+        notification.innerText = data.message;
+        notificationsContainer.prepend(notification);
+
+        setTimeout(() => {
+          notification.classList.add("hide");
+          notification.addEventListener("transitionend", () => {
+            notification.remove();
+          }, { once: true });
+        }, 8000);
+      } else if (data.type === "openSettings") {
+        hudSettings.style.display = "flex";
+        // Set slider values to current HUD values
+        hudScaleSlider.value = data.settings.scale * 100;
+        hudBottomSlider.value = data.settings.bottom;
+        hudLeftSlider.value = data.settings.left;
+        
+        // Update span values
+        scaleValueSpan.innerText = `${Math.round(data.settings.scale * 100)}%`;
+        bottomValueSpan.innerText = `${data.settings.bottom}%`;
+        leftValueSpan.innerText = `${data.settings.left}%`;
+
+        currentHudSettings = { ...data.settings }; // Initialize current settings
+      } else if (data.type === "applySettings") {
+        applyHudSettings(data.settings);
+        currentHudSettings = { ...data.settings };
+      }
+    });
+
+    // Close UI when Escape is pressed
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' || event.key === 't') { // 't' is often used for chat/menu in FiveM
+            if (hudSettings.style.display === "flex") {
+                hudSettings.style.display = "none";
+                fetch(`https://${GetParentResourceName()}/closeUI`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json; charset=UTF-8',
+                    },
+                    body: JSON.stringify({}),
+                });
+            }
+        }
+    });
+
+    // Notify the NUI that the UI is ready and request initial settings
+    window.onload = function() {
+      fetch(`https://${GetParentResourceName()}/uiReady`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: JSON.stringify({}),
+      });
+    };
+  </script>
+</body>
+</html>
