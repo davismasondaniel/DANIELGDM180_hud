@@ -1,12 +1,10 @@
--- FiveM Cruise Control Script
+-- FiveM Cruise Control Script (MPH Version with Command)
 
 -- Global variables for cruise control state
 local cruiseControlActive = false
-local cruiseSpeed = 0.0 -- Stores the target speed for cruise control
+local cruiseSpeed = 0.0 -- Stores the target speed for cruise control in MPH
 
 -- Configuration
-local toggleKey = 58 -- Default key for toggling cruise control (G)
-local setSpeedKey = 58 -- Default key for setting current speed (G) - Now same as toggleKey
 local notificationDuration = 3000 -- Duration of notifications in milliseconds
 
 -- Function to display a notification
@@ -16,35 +14,34 @@ local function showNotification(text, duration)
     SetNotificationTextEntry("STRING")
     AddTextComponentString(text)
     DrawNotification(false, false)
-    -- You might want to clear the notification after a duration, but FiveM's native
-    -- DrawNotification handles basic display. For more advanced control, you'd need
-    -- to use a custom UI or more complex native functions.
 end
 
--- Function to get the current vehicle speed in KM/H
+-- Function to get the current vehicle speed in MPH
 -- vehicle: The vehicle entity
 local function getVehicleSpeed(vehicle)
     -- GetEntitySpeed returns speed in meters per second (m/s)
-    -- To convert to KM/H, multiply by 3.6 (m/s * 3600 s/hr / 1000 m/km)
-    return GetEntitySpeed(vehicle) * 3.6
+    -- To convert to MPH, multiply by 2.23694 (m/s * 3600 s/hr / 1609.34 m/mile)
+    return GetEntitySpeed(vehicle) * 2.23694
 end
 
 -- Function to set the vehicle speed for cruise control
 -- vehicle: The vehicle entity
--- targetSpeed: The desired speed in KM/H
+-- targetSpeed: The desired speed in MPH
 local function setVehicleCruiseSpeed(vehicle, targetSpeed)
     local currentSpeed = getVehicleSpeed(vehicle)
 
     -- If the current speed is significantly lower than the target, apply throttle
     if currentSpeed < targetSpeed - 1.0 then -- -1.0 for a small buffer
-        SetVehicleThrottle(vehicle, 1.0) -- Full throttle
+        SetVehicleForwardSpeed(vehicle, 1.0) -- Full throttle
+        SetVehicleBrake(vehicle, 0.0) -- Ensure brake is released
     -- If the current speed is significantly higher than the target, apply brake or reduce throttle
     elseif currentSpeed > targetSpeed + 1.0 then -- +1.0 for a small buffer
         SetVehicleBrake(vehicle, 1.0) -- Apply brake
+        SetVehicleForwardSpeed(vehicle, 0.0) -- Ensure throttle is released
     else
         -- If close to target speed, try to maintain it with partial throttle
         -- This is a simple approach; more advanced systems might use PID controllers
-        SetVehicleThrottle(vehicle, 0.5) -- Half throttle to maintain
+        SetVehicleForwardSpeed(vehicle, 0.5) -- Half throttle to maintain
         SetVehicleBrake(vehicle, 0.0) -- Release brake
     end
 end
@@ -67,7 +64,6 @@ CreateThread(function()
             setVehicleCruiseSpeed(vehicle, cruiseSpeed)
 
             -- Display current cruise speed on screen
-            -- This is a very basic display. For a better UI, consider using Scaleform or NUI.
             SetTextFont(4)
             SetTextProportional(1)
             SetTextScale(0.0, 0.5)
@@ -76,60 +72,35 @@ CreateThread(function()
             SetTextEdge(1, 0, 0, 0, 255)
             SetTextOutline()
             SetTextEntry("STRING")
-            AddTextComponentString("Cruise Control: ON (~g~" .. math.floor(cruiseSpeed) .. " KM/H~w~)")
+            AddTextComponentString("Cruise Control: ON (~g~" .. math.floor(cruiseSpeed) .. " MPH~w~)")
             DrawText(0.7, 0.9) -- Position on screen (X, Y)
         end
     end
 end)
 
--- Keybind for toggling cruise control (G by default)
-CreateThread(function()
-    while true do
-        Wait(0)
+-- Register the /cruisecontrol command
+RegisterCommand("cruisecontrol", function(source, args, rawCommand)
+    local playerPed = PlayerPedId()
+    if IsPedInAnyVehicle(playerPed, false) then
+        local currentVehicle = GetVehiclePedIsIn(playerPed, false)
 
-        if IsControlJustReleased(0, toggleKey) then
-            local playerPed = PlayerPedId()
-            if IsPedInAnyVehicle(playerPed, false) then
-                if not cruiseControlActive then
-                    -- If cruise control is off, activate it
-                    cruiseControlActive = true
-                    -- Set the initial cruise speed to the current vehicle speed
-                    local currentVehicle = GetVehiclePedIsIn(playerPed, false)
-                    cruiseSpeed = getVehicleSpeed(currentVehicle)
-                    showNotification("Cruise Control ~g~ACTIVATED~w~ at ~b~" .. math.floor(cruiseSpeed) .. " KM/H~w~", notificationDuration)
-                else
-                    -- If cruise control is on, deactivate it
-                    cruiseControlActive = false
-                    showNotification("Cruise Control ~r~DEACTIVATED~w~", notificationDuration)
-                    -- Re-enable controls and reset throttle/brake
-                    local currentVehicle = GetVehiclePedIsIn(playerPed, false)
-                    if DoesEntityExist(currentVehicle) then
-                        SetVehicleThrottle(currentVehicle, 0.0)
-                        SetVehicleBrake(currentVehicle, 0.0)
-                    end
-                end
-            else
-                showNotification("~r~You must be in a vehicle to use cruise control.~w~", notificationDuration)
+        if not cruiseControlActive then
+            -- If cruise control is off, activate it
+            cruiseControlActive = true
+            -- Set the initial cruise speed to the current vehicle speed
+            cruiseSpeed = getVehicleSpeed(currentVehicle)
+            showNotification("Cruise Control ~g~ACTIVATED~w~ at ~b~" .. math.floor(cruiseSpeed) .. " MPH~w~", notificationDuration)
+        else
+            -- If cruise control is on, deactivate it
+            cruiseControlActive = false
+            showNotification("Cruise Control ~r~DEACTIVATED~w~", notificationDuration)
+            -- Re-enable controls and reset throttle/brake
+            if DoesEntityExist(currentVehicle) then
+                SetVehicleThrottle(currentVehicle, 0.0)
+                SetVehicleBrake(currentVehicle, 0.0)
             end
         end
+    else
+        showNotification("~r~You must be in a vehicle to use cruise control.~w~", notificationDuration)
     end
-end)
-
--- Keybind for setting current speed as cruise speed (G by default, now same as toggleKey)
-CreateThread(function()
-    while true do
-        Wait(0)
-
-        if IsControlJustReleased(0, setSpeedKey) then
-            local playerPed = PlayerPedId()
-            if IsPedInAnyVehicle(playerPed, false) then
-                local currentVehicle = GetVehiclePedIsIn(playerPed, false)
-                cruiseSpeed = getVehicleSpeed(currentVehicle)
-                cruiseControlActive = true -- Automatically activate when setting speed
-                showNotification("Cruise Speed ~b~SET~w~ to ~g~" .. math.floor(cruiseSpeed) .. " KM/H~w~", notificationDuration)
-            else
-                showNotification("~r~You must be in a vehicle to set cruise speed.~w~", notificationDuration)
-            end
-        end
-    end
-end)
+end, false) -- The 'false' makes it a client-side command accessible to all players
