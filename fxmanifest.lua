@@ -17,8 +17,7 @@ files {
 
 client_scripts {
     'config.lua',
-    'client/client.lua',
-    'client/CruiseControl.lua'
+    'client/client.lua'
 }
 
 dependencies {
