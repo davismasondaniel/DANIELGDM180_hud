@@ -3,9 +3,9 @@ local lastSeatbeltStatus = false -- New variable to track the last sent seatbelt
 
 -- Default HUD settings
 local defaultHudSettings = {
-    scale = 1.0,
-    bottom = 5,
-    left = 90
+    scale = 0.8,
+    bottom = 3,
+    left = 92
 }
 
 -- Current HUD settings, loaded from KVP or default
@@ -140,7 +140,6 @@ CreateThread(function()
                 speed = speed,
                 fuel = fuel,
                 seatbelt = seatbeltOn,
-                cruise = cruiseOn, -- Assuming cruiseOn is defined elsewhere if used
                 gear = gear, -- Add gear to the message
                 rpm = rpm -- Add RPM to the message
             })
