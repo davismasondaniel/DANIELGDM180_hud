@@ -1,164 +1,124 @@
-DANIELGDM180\_hud Resource (Speed, Seatbelt \& Fuel)
+🚗 DANIELGDM180_hud (Seatbelt + Fuel)
 
-This resource provides a sleek, modern, and highly configurable in-vehicle heads-up display (HUD) for FiveM. It features real-time speed, a dynamic seatbelt system with crash physics, and fuel integration.
-
-
+A lightweight and modern vehicle HUD for FiveM featuring a seatbelt system, fuel display, and clean UI with sound effects. Built with ox_lib notifications and LegacyFuel integration.
 
 ✨ Features
 
-Real-time Speedometer: Displays current speed in a clear format.
+🚘 Vehicle HUD (only shows while in a vehicle)
+
+⛓️ Seatbelt system with toggle key
+
+🔊 Buckle / unbuckle sound effects
+
+⛽ Fuel display (LegacyFuel support)
+
+🧠 Optimized refresh rate (configurable)
+
+📐 Adjustable HUD positioning & scale
+
+⏸️ Automatically hides HUD when pause/map is open
+
+🔔 ox_lib notifications
+
+📦 Dependencies
+
+This resource requires the following:
+
+ox_lib
+
+LegacyFuel
+
+Make sure both are started before this resource.
+
+ensure ox_lib
+ensure LegacyFuel
+ensure DANIELGDM180_hud
+
+🛠 Installation
+
+Download or clone this repository
+
+Place the folder in your resources directory
+Example:
+
+resources/DANIELGDM180_hud
 
 
+Add the resource to your server.cfg:
 
-Dynamic Seatbelt System:
-
-
-
-Toggle seatbelt ON/OFF with a configurable keybind.
+ensure DANIELGDM180_hud
 
 
-
-Plays distinct buckle and unbuckle sounds.
-
-
-
-Ejection Physics: Players are violently ejected from the vehicle upon a high-speed collision if the seatbelt is not worn.
-
-
-
-Fuel Integration: Displays current fuel level, requiring the LegacyFuel resource as a dependency.
-
-
-
-Customizable UI: Players can easily adjust the HUD's scale, vertical position (bottom), and horizontal position (left) through a dedicated NUI settings menu. Settings are saved using KVP storage. /hudsettings
-
-
-
-Notifications: Provides clean NUI notifications for seatbelt status changes and ejection events.
-
-
-
-🛠️ Dependencies
-
-This resource requires the following external resource to function correctly:
-
-
-
-LegacyFuel: Required for the fuel display functionality.
-
-
-
-🚀 Installation
-
-Download: Download the resource files.
-
-
-
-Place Folder: Place the DANIELGDM180\_hud folder into your server's resources directory.
-
-
-
-Start Resource: Add the following line to your server.cfg:
-
-
-
-ensure DANIELGDM180\_hud
-
-
-
-(Replace DANIELGDM180\_hud with your actual folder name if different).
-
-
+Restart your server
 
 ⚙️ Configuration
 
-All user-configurable settings are located in config.lua.
+All configuration is handled in config.lua.
 
+Seatbelt Keybind
+Config.ToggleSeatbeltKey = 'B'
 
 
-Variable
+Change 'B' to any valid FiveM control key.
 
+HUD Refresh Rate
+Config.RefreshRate = 200
 
 
-Default Value
+Lower value = smoother updates (more CPU usage)
 
+Higher value = better performance (less smooth)
 
+🧠 HUD Behavior
 
-Description
+HUD only appears when the player is inside a vehicle
 
+HUD hides automatically when:
 
+Pause menu is open
 
-Config.ToggleSeatbeltKey
+Map is open
 
+Seatbelt status is synced to the UI only when it changes (performance-friendly)
 
+🔊 Included Assets
 
-'B'
+fuel-icon.png – fuel indicator icon
 
+buckle.ogg – seatbelt on sound
 
+unbuckle.ogg – seatbelt off sound
 
-The key used to buckle and unbuckle the seatbelt. Refer to the FiveM Controls page for valid key inputs.
+All assets are loaded via ui.html.
 
+📁 File Structure
+DANIELGDM180_hud/
+│
+├── fxmanifest.lua
+├── config.lua
+├── client/
+│   └── client.lua
+└── html/
+    ├── ui.html
+    ├── fuel-icon.png
+    └── sounds/
+        ├── buckle.ogg
+        └── unbuckle.ogg
 
+🧪 Framework Support
 
-Config.RefreshRate
+✅ Standalone
 
+✅ ESX
 
+✅ QBCore
+(No framework dependency — works client-side)
 
-200
+👤 Author
 
+DANIELGDM180
 
+📜 License
 
-The update frequency (in milliseconds) for the HUD data (speed, fuel). Lower is smoother but more resource-intensive.
-
-
-
-🎮 Usage
-
-Keybinds
-
-Action
-
-
-
-Key
-
-
-
-Location
-
-
-
-Toggle Seatbelt
-
-
-
-B (Default)
-
-
-
-Configured in config.lua
-
-
-
-Open/Close HUD Settings
-
-
-
-Escape
-
-
-
-This is handled internally by the UI and uses the key to close the menu.
-
-
-
-Seatbelt Physics
-
-The seatbelt is OFF by default when you enter a vehicle. You must buckle up to prevent being ejected in a crash.
-
-
-
-Customizing the HUD Position
-
-The HUD's position and scale are saved automatically per user. You can adjust the settings by using the in-game UI menu, which is toggled when the player opens and closes it using the Escape key.
-
+Free to use and modify for personal or server use.
+Do not resell without permission.
