@@ -1,5 +1,7 @@
 local seatbeltOn = false
 local lastSeatbeltStatus = false -- New variable to track the last sent seatbelt status
+local uiHiddenByPause = false -- Tracks whether we hid the UI due to pause/map
+
 
 -- Default HUD settings
 local defaultHudSettings = {
@@ -11,14 +13,33 @@ local defaultHudSettings = {
 -- Current HUD settings, loaded from KVP or default
 local currentHudSettings = {}
 
--- Function to send a notification
-local function sendNotification(message, type)
-    SendNUIMessage({
-        type = "notification",
-        message = message,
-        notificationType = type or "info" -- Default to 'info' if no type is provided
+local function notify(type, title, description)
+    lib.notify({
+        title = title or 'Vehicle',
+        description = description,
+        type = type or 'inform' -- success | error | warning | inform
     })
 end
+
+-- Force the player into ragdoll for a duration (ms). Re-applies each frame for reliability.
+local function forceRagdoll(ped, durationMs)
+    if not ped or ped == 0 then return end
+    durationMs = durationMs or 3000
+
+    -- Some scripts disable ragdoll; re-enable it.
+    SetPedCanRagdoll(ped, true)
+
+    local endTime = GetGameTimer() + durationMs
+    CreateThread(function()
+        while GetGameTimer() < endTime do
+            if not IsPedRagdoll(ped) then
+                SetPedToRagdoll(ped, 1000, 1000, 0, false, false, false)
+            end
+            Wait(0)
+        end
+    end)
+end
+
 
 -- Function to load HUD settings from KVP
 local function loadHudSettings()
@@ -43,14 +64,14 @@ end
 local function saveHudSettings(settings)
     SetResourceKvp("hud_settings", json.encode(settings))
     currentHudSettings = settings
-    sendNotification("HUD settings saved!", "success")
+    notify('success', 'HUD', 'HUD settings saved!')
 end
 
 -- Function to reset HUD settings to default
 local function resetHudSettings()
     SetResourceKvp("hud_settings", json.encode(defaultHudSettings))
     currentHudSettings = defaultHudSettings
-    sendNotification("HUD settings reset to default!", "info")
+    notify('info', 'HUD', 'HUD settings reset to default!')
 end
 
 -- Register command to toggle seatbelt
@@ -72,9 +93,9 @@ RegisterCommand("toggleSeatbelt", function()
 
             -- Add notification here
             if seatbeltOn then
-                sendNotification("Seatbelt ON", "success")
+                notify('success', 'HUD', 'Seatbelt ON')
             else
-                sendNotification("Seatbelt OFF", "error")
+                notify('error', 'HUD', 'Seatbelt OFF')
             end
         end
     end
@@ -121,6 +142,24 @@ end)
 CreateThread(function()
     while true do
         Wait(Config.RefreshRate) -- Use Config.RefreshRate for HUD updates
+
+        -- Hide NUI while pause menu / map is open (ESC -> Map)
+        local paused = IsPauseMenuActive()
+        if paused then
+            if not uiHiddenByPause then
+                uiHiddenByPause = true
+                SendNUIMessage({ type = "pause", active = true })
+                -- Force-hide the HUD immediately (in case it was showing)
+                SendNUIMessage({ type = "hud", display = false })
+            end
+            goto continue
+        else
+            if uiHiddenByPause then
+                uiHiddenByPause = false
+                SendNUIMessage({ type = "pause", active = false })
+            end
+        end
+
         local ped = PlayerPedId()
         local vehicle = GetVehiclePedIsIn(ped, false)
 
@@ -146,9 +185,10 @@ CreateThread(function()
         else
             SendNUIMessage({type = "hud", display = false})
         end
+
+        ::continue::
     end
 end)
-
 local wasInVehicle = false
 local lastSpeed = 0
 
@@ -176,7 +216,8 @@ CreateThread(function()
                 Wait(200)
                 SetEntityCoords(ped, coords.x + forwardVector.x, coords.y + forwardVector.y, coords.z - 0.5)
                 SetEntityVelocity(ped, forwardVector.x * lastSpeed, forwardVector.y * lastSpeed, 0.0)
-                sendNotification("You were ejected from the vehicle!", "warning") -- Notification for ejection
+                forceRagdoll(ped, 5000)
+                notify('warning', 'HUD', 'You were ejected from the vehicle!')
             end
 
             lastSpeed = currentSpeed
@@ -191,7 +232,7 @@ CreateThread(function()
                         playSound = "unbuckle"
                     })
                     lastSeatbeltStatus = seatbeltOn
-                    sendNotification("Seatbelt OFF (Left Vehicle)", "error") -- Notification when leaving vehicle with seatbelt on
+                    notify('error', 'HUD', 'Seatbelt OFF (Left Vehicle)')
                 end
             end
             wasInVehicle = false

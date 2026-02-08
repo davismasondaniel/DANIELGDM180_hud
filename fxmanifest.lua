@@ -20,6 +20,11 @@ client_scripts {
     'client/client.lua'
 }
 
+shared_scripts {
+	'@ox_lib/init.lua'
+}
+
 dependencies {
     'LegacyFuel',
+    'ox_lib',
 }

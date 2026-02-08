@@ -446,6 +446,9 @@
             notification.remove();
           }, { once: true });
         }, 8000);
+      } else if (data.type === "pause") {
+        // Hide EVERYTHING (hud + notifications + settings) while pause/map is open
+        document.body.style.display = data.active ? "none" : "block";
       } else if (data.type === "openSettings") {
         hudSettings.style.display = "flex";
         // Set slider values to current HUD values
