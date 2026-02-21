@@ -17,4 +17,4 @@ Config.RefreshRate = 50
 -- Keybind for toggling the HUDSetting
 -- Default: "" (keyboard)
 -- You can find a list of FiveM keybinds here: https://docs.fivem.net/docs/game-references/controls/
-Config.HUDSetting = ''
+Config.HUDSettings = ''

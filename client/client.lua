@@ -113,8 +113,8 @@ RegisterCommand("hudsettings", function()
     })
 end, false)
 
--- Register key mapping for HUD settings (e.g., 'T' or 'F1')
-RegisterKeyMapping("hudsettings", "Open HUD Settings", "keyboard", Config.HUDSetting)
+-- Use the keybind from config.lua HUD settings
+RegisterKeyMapping("hudsettings", "Open HUD Settings", "keyboard", Config.HUDSettings)
 
 -- NUI Callbacks
 RegisterNuiCallback("saveHudSettings", function(data, cb)
