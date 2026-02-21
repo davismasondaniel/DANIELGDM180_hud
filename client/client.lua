@@ -113,8 +113,8 @@ RegisterCommand("hudsettings", function()
     })
 end, false)
 
--- Register key mapping for HUD settings (e.g., 'T' or 'F1' - adjust in config if needed)
---RegisterKeyMapping("hudsettings", "Open HUD Settings", "keyboard", "F10")
+-- Register key mapping for HUD settings (e.g., 'T' or 'F1')
+RegisterKeyMapping("hudsettings", "Open HUD Settings", "keyboard", Config.HUDSetting)
 
 -- NUI Callbacks
 RegisterNuiCallback("saveHudSettings", function(data, cb)
@@ -179,8 +179,8 @@ CreateThread(function()
                 speed = speed,
                 fuel = fuel,
                 seatbelt = seatbeltOn,
-                gear = gear, -- Add gear to the message
-                rpm = rpm -- Add RPM to the message
+                gear = gear,
+                rpm = rpm
             })
         else
             SendNUIMessage({type = "hud", display = false})
