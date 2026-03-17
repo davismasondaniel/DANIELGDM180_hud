@@ -12,7 +12,7 @@ Config.ToggleSeatbeltKey = 'B'
 -- A lower value means more frequent updates (smoother but more resource intensive)
 -- A higher value means less frequent updates (less smooth but less resource intensive)
 -- Default: 200 (5 frames per second)
-Config.RefreshRate = 50
+Config.RefreshRate = 100
 
 -- Keybind for toggling the HUDSetting
 -- Default: "" (keyboard)
