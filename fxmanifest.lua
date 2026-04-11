@@ -2,9 +2,10 @@ fx_version 'cerulean'
 game 'gta5'
 lua54 'yes'
 
+author 'DANIELGDM180'
 description 'car hud'
 version '1.0.0'
-author 'DANIELGDM180'
+
 
 ui_page 'html/ui.html'
 
