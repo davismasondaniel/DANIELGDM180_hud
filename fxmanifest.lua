@@ -13,7 +13,8 @@ files {
     'html/ui.html',
     'html/sounds/buckle.ogg',
     'html/sounds/unbuckle.ogg',
-    'html/fuel-icon.png'
+    'html/fuel-icon.png',
+    'html/engine-icon.png'
 }
 
 client_scripts {

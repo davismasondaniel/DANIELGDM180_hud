@@ -192,10 +192,17 @@
     </div>
   </div>
 
-  <div class="fuel-section">
+ <div class="fuel-section">
     <img src="fuel-icon.png" alt="Fuel" class="fuel-icon" />
     <div class="bar fuel-bar">
       <div class="fuel-level" id="fuelBar"></div>
+    </div>
+  </div>
+
+  <div class="fuel-section">
+    <img src="engine-icon.png" alt="Engine" class="fuel-icon" />
+    <div class="bar fuel-bar">
+      <div class="fuel-level" id="engineBar" style="background: #05c02e;"></div>
     </div>
   </div>
 </div>
@@ -320,11 +327,12 @@
     window.addEventListener("message", function (event) {
       const data = event.data;
       
-      if (data.type === "hud") {
+        if (data.type === "hud") {
         hud.style.display = data.display ? "flex" : "none";
         if (data.display) {
           document.getElementById("mph").innerText = data.speed;
           document.getElementById("fuelBar").style.width = `${data.fuel}%`;
+          document.getElementById("engineBar").style.width = `${data.engine}%`;
           document.getElementById("seatbelt").innerText = data.seatbelt ? "ON" : "OFF";
           document.getElementById("gear").innerText = data.gear === 0 ? "R" : (data.gear === -1 ? "P" : data.gear);
           document.getElementById("rpm").innerText = data.rpm;

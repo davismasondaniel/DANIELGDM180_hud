@@ -160,24 +160,27 @@ CreateThread(function()
             end
         end
 
+        -- Find the Main HUD update loop in your client.lua and replace the IsPedInAnyVehicle section:
+
         local ped = PlayerPedId()
         local vehicle = GetVehiclePedIsIn(ped, false)
 
-        -- Check if the ped is in *any* seat of a vehicle
         if IsPedInAnyVehicle(ped, false) then
             local speed = math.floor(GetEntitySpeed(vehicle) * 2.23694)
-            -- Ensure LegacyFuel is available, otherwise this will error.
-            -- If LegacyFuel is not always present, you might want to add a check like:
-            -- local fuel = exports["LegacyFuel"] and exports["LegacyFuel"]:GetFuel(vehicle) or 100 -- Default to 100 if not available
             local fuel = exports["LegacyFuel"]:GetFuel(vehicle)
-            local gear = GetVehicleCurrentGear(vehicle) -- Get the current gear
-            local rpm = math.floor(GetVehicleCurrentRpm(vehicle) * 10000) -- Get the current RPM and convert to a more readable number (0-10000)
+            local gear = GetVehicleCurrentGear(vehicle)
+            local rpm = math.floor(GetVehicleCurrentRpm(vehicle) * 10000)
+            
+            -- Get engine health (0-1000 range) and convert to percentage
+            local engineHealth = GetVehicleEngineHealth(vehicle)
+            local enginePercent = (engineHealth / 10)
 
             SendNUIMessage({
                 type = "hud",
                 display = true,
                 speed = speed,
                 fuel = fuel,
+                engine = enginePercent, -- New data sent to UI
                 seatbelt = seatbeltOn,
                 gear = gear,
                 rpm = rpm
