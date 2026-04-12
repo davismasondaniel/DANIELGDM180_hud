@@ -160,8 +160,6 @@ CreateThread(function()
             end
         end
 
-        -- Find the Main HUD update loop in your client.lua and replace the IsPedInAnyVehicle section:
-
         local ped = PlayerPedId()
         local vehicle = GetVehiclePedIsIn(ped, false)
 
