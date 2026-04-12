@@ -8,8 +8,8 @@
     body {
       margin: 0;
       background: none;
-      font-family: 'Inter', sans-serif; /* Changed font to Inter */
-      overflow: hidden; /* Prevent scrollbars */
+      font-family: 'Inter', sans-serif;
+      overflow: hidden;
     }
 
     #hud {
@@ -27,7 +27,7 @@
       gap: 15px;
       align-items: stretch;
       box-shadow: 0 0 10px rgba(0,0,0,0.5);
-      transition: all 0.1s ease-out; /* Smooth transitions for movement and scale */
+      transition: all 0.1s ease-out;
     }
 
     .hud-top-row {
@@ -77,58 +77,6 @@
       font-size: 16px;
     }
 
-    /* Notification styles */
-    #notifications {
-      position: absolute;
-      top: 2%;
-      right: 2%;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      width: 300px;
-      z-index: 1000;
-    }
-
-    .notification {
-      background: rgba(0, 0, 0, 0.6);
-      color: #fff;
-      padding: 10px 15px;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-      animation: fadeIn 0.8s ease-out;
-      opacity: 0;
-      transition: opacity 0.8s ease-out;
-    }
-
-    .notification.success {
-      border-left: 5px solid #4CAF50;
-    }
-
-    .notification.error {
-      border-left: 5px solid #F44336;
-    }
-
-    .notification.warning {
-      border-left: 5px solid #FFC107;
-      color: #333; /* Darker text for warning */
-      background: rgba(255, 193, 7, 0.9);
-    }
-
-    .notification.info {
-      border-left: 5px solid #2196F3;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .notification.hide {
-      opacity: 0;
-      transform: translateY(-20px);
-      transition: opacity 0.5s ease-out, transform 0.5s ease-out;
-    }
-
     /* HUD Settings Menu Styles */
     #hud-settings {
       position: absolute;
@@ -139,13 +87,13 @@
       padding: 30px;
       border-radius: 20px;
       color: #fff;
-      display: none; /* Hidden by default */
+      display: none;
       flex-direction: column;
       gap: 20px;
       box-shadow: 0 0 20px rgba(0,0,0,0.7);
       width: 350px;
       max-width: 90%;
-      z-index: 1001; /* Above HUD and notifications */
+      z-index: 1001;
     }
 
     #hud-settings h2 {
@@ -212,35 +160,12 @@
       box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     }
 
-    .settings-button.save {
-      background-color: #4CAF50; /* Green for Save */
-      color: white;
-    }
-
-    .settings-button.save:hover {
-      background-color: #45a049;
-      transform: translateY(-2px);
-    }
-
-    .settings-button.reset {
-      background-color: #F44336; /* Red for Reset */
-      color: white;
-    }
-
-    .settings-button.reset:hover {
-      background-color: #da190b;
-      transform: translateY(-2px);
-    }
-
-    .settings-button.close {
-      background-color: #555; /* Grey for Close */
-      color: white;
-    }
-
-    .settings-button.close:hover {
-      background-color: #333;
-      transform: translateY(-2px);
-    }
+    .settings-button.save { background-color: #4CAF50; color: white; }
+    .settings-button.save:hover { background-color: #45a049; transform: translateY(-2px); }
+    .settings-button.reset { background-color: #F44336; color: white; }
+    .settings-button.reset:hover { background-color: #da190b; transform: translateY(-2px); }
+    .settings-button.close { background-color: #555; color: white; }
+    .settings-button.close:hover { background-color: #333; transform: translateY(-2px); }
   </style>
 </head>
 <body>
@@ -275,9 +200,6 @@
   </div>
 </div>
 
-<div id="notifications"></div>
-
-<!-- HUD Settings Menu -->
 <div id="hud-settings">
   <h2>HUD Settings</h2>
   <div class="setting-item">
@@ -305,7 +227,6 @@
   <script>
     const hud = document.getElementById("hud");
     const hudSettings = document.getElementById("hud-settings");
-    const notificationsContainer = document.getElementById("notifications");
 
     const hudScaleSlider = document.getElementById("hud-scale");
     const hudBottomSlider = document.getElementById("hud-bottom");
@@ -321,13 +242,11 @@
       left: 90
     };
 
-    // Function to apply HUD settings
     function applyHudSettings(settings) {
       hud.style.transform = `translateX(-50%) scale(${settings.scale})`;
       hud.style.bottom = `${settings.bottom}%`;
       hud.style.left = `${settings.left}%`;
 
-      // Update slider values and spans
       hudScaleSlider.value = settings.scale * 100;
       hudBottomSlider.value = settings.bottom;
       hudLeftSlider.value = settings.left;
@@ -337,7 +256,6 @@
       leftValueSpan.innerText = `${settings.left}%`;
     }
 
-    // Event listeners for sliders
     hudScaleSlider.addEventListener("input", (e) => {
       const scale = parseFloat(e.target.value) / 100;
       currentHudSettings.scale = scale;
@@ -359,55 +277,42 @@
       leftValueSpan.innerText = `${left}%`;
     });
 
-    // Save settings button
     document.getElementById("save-settings").addEventListener("click", () => {
       fetch(`https://${GetParentResourceName()}/saveHudSettings`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
+        headers: { 'Content-Type': 'application/json; charset=UTF-8' },
         body: JSON.stringify(currentHudSettings),
-      }).then(resp => resp.json()).then(resp => console.log(resp));
+      });
       hudSettings.style.display = "none";
       fetch(`https://${GetParentResourceName()}/closeUI`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
+        headers: { 'Content-Type': 'application/json; charset=UTF-8' },
         body: JSON.stringify({}),
       });
     });
 
-    // Reset settings button
     document.getElementById("reset-settings").addEventListener("click", () => {
       const defaultSettings = { scale: 1.0, bottom: 5, left: 90 };
       applyHudSettings(defaultSettings);
-      currentHudSettings = { ...defaultSettings }; // Update current settings to default
+      currentHudSettings = { ...defaultSettings };
       fetch(`https://${GetParentResourceName()}/resetHudSettings`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
+        headers: { 'Content-Type': 'application/json; charset=UTF-8' },
         body: JSON.stringify({}),
-      }).then(resp => resp.json()).then(resp => console.log(resp));
+      });
       hudSettings.style.display = "none";
       fetch(`https://${GetParentResourceName()}/closeUI`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
+        headers: { 'Content-Type': 'application/json; charset=UTF-8' },
         body: JSON.stringify({}),
       });
     });
 
-    // Close settings button
     document.getElementById("close-settings").addEventListener("click", () => {
       hudSettings.style.display = "none";
       fetch(`https://${GetParentResourceName()}/closeUI`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
+        headers: { 'Content-Type': 'application/json; charset=UTF-8' },
         body: JSON.stringify({}),
       });
     });
@@ -426,71 +331,44 @@
         }
       } else if (data.type === "seatbelt") {
         document.getElementById("seatbelt").innerText = data.status ? "ON" : "OFF";
-        
         if (data.playSound) {
           const audio = document.getElementById(data.playSound);
           if (audio) audio.play();
         }
-      } else if (data.type === "notification") {
-        const notification = document.createElement("div");
-        notification.classList.add("notification");
-        if (data.notificationType) {
-          notification.classList.add(data.notificationType);
-        }
-        notification.innerText = data.message;
-        notificationsContainer.prepend(notification);
-
-        setTimeout(() => {
-          notification.classList.add("hide");
-          notification.addEventListener("transitionend", () => {
-            notification.remove();
-          }, { once: true });
-        }, 8000);
       } else if (data.type === "pause") {
-        // Hide EVERYTHING (hud + notifications + settings) while pause/map is open
         document.body.style.display = data.active ? "none" : "block";
       } else if (data.type === "openSettings") {
         hudSettings.style.display = "flex";
-        // Set slider values to current HUD values
         hudScaleSlider.value = data.settings.scale * 100;
         hudBottomSlider.value = data.settings.bottom;
         hudLeftSlider.value = data.settings.left;
-        
-        // Update span values
         scaleValueSpan.innerText = `${Math.round(data.settings.scale * 100)}%`;
         bottomValueSpan.innerText = `${data.settings.bottom}%`;
         leftValueSpan.innerText = `${data.settings.left}%`;
-
-        currentHudSettings = { ...data.settings }; // Initialize current settings
+        currentHudSettings = { ...data.settings };
       } else if (data.type === "applySettings") {
         applyHudSettings(data.settings);
         currentHudSettings = { ...data.settings };
       }
     });
 
-    // Close UI when Escape is pressed
     document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' || event.key === 't') { // 't' is often used for chat/menu in FiveM
+        if (event.key === 'Escape' || event.key === 't') {
             if (hudSettings.style.display === "flex") {
                 hudSettings.style.display = "none";
                 fetch(`https://${GetParentResourceName()}/closeUI`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json; charset=UTF-8',
-                    },
+                    headers: { 'Content-Type': 'application/json; charset=UTF-8' },
                     body: JSON.stringify({}),
                 });
             }
         }
     });
 
-    // Notify the NUI that the UI is ready and request initial settings
     window.onload = function() {
       fetch(`https://${GetParentResourceName()}/uiReady`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
+        headers: { 'Content-Type': 'application/json; charset=UTF-8' },
         body: JSON.stringify({}),
       });
     };
