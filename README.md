@@ -1,124 +1,186 @@
-🚗 DANIELGDM180_hud (Seatbelt + Fuel)
+🚗 DANIELGDM180\_hud
 
-A lightweight and modern vehicle HUD for FiveM featuring a seatbelt system, fuel display, and clean UI with sound effects. Built with ox_lib notifications and LegacyFuel integration.
+A lightweight, modern vehicle HUD for FiveM featuring a seatbelt system with ejection physics, fuel and engine health displays, and an in-game customization menu. Built for performance and clean aesthetics using ox\_lib and LegacyFuel.
+
+
 
 ✨ Features
 
-🚘 Vehicle HUD (only shows while in a vehicle)
+🚘 Smart HUD: Only appears when inside a vehicle.
 
-⛓️ Seatbelt system with toggle key
 
-🔊 Buckle / unbuckle sound effects
 
-⛽ Fuel display (LegacyFuel support)
+⛓️ Seatbelt System:
 
-🧠 Optimized refresh rate (configurable)
 
-📐 Adjustable HUD positioning & scale
 
-⏸️ Automatically hides HUD when pause/map is open
+Toggleable with a configurable keybind.
 
-🔔 ox_lib notifications
+
+
+Prevents accidental vehicle exiting while buckled.
+
+
+
+Ejection Physics: High-speed impacts without a seatbelt will launch the player through the windshield into a ragdoll state.
+
+
+
+📊 Comprehensive Display:
+
+
+
+Speedometer (MPH).
+
+
+
+Gear Indicator \& RPM.
+
+
+
+Fuel Level (LegacyFuel integration).
+
+
+
+Engine Health Bar.
+
+
+
+🛠️ In-Game Settings: Customize the HUD scale, vertical, and horizontal positioning via a NUI menu.
+
+
+
+🔊 Immersive Audio: Custom buckle and unbuckle sound effects.
+
+
+
+🧠 Optimized:
+
+
+
+Configurable refresh rates.
+
+
+
+Automatically hides when the pause menu or map is open.
+
+
+
+Uses KVP to save your custom HUD layout across sessions.
+
+
 
 📦 Dependencies
 
-This resource requires the following:
+To use this resource, you must have the following installed:
 
-ox_lib
 
-LegacyFuel
 
-Make sure both are started before this resource.
+ox\_lib https://github.com/CommunityOx/ox\_lib (For notifications)
 
-ensure ox_lib
-ensure LegacyFuel
-ensure DANIELGDM180_hud
+
+
+LegacyFuel https://github.com/Drift91/LegacyFuelEdit (For fuel data)
+
+
 
 🛠 Installation
 
-Download or clone this repository
-
-Place the folder in your resources directory
-Example:
-
-resources/DANIELGDM180_hud
+Download or clone this repository.
 
 
-Add the resource to your server.cfg:
 
-ensure DANIELGDM180_hud
+Place the DANIELGDM180\_hud folder into your server's resources directory.
 
 
-Restart your server
+
+Add the following to your server.cfg:
+
+
+
+Code snippet
+
+ensure ox\_lib
+
+ensure LegacyFuel
+
+ensure DANIELGDM180\_hud
+
+Restart your server.
+
+
 
 ⚙️ Configuration
 
-All configuration is handled in config.lua.
-
-Seatbelt Keybind
-Config.ToggleSeatbeltKey = 'B'
+Open config.lua to tweak the script to your liking:
 
 
-Change 'B' to any valid FiveM control key.
 
-HUD Refresh Rate
-Config.RefreshRate = 200
+Seatbelt Keybind: Config.ToggleSeatbeltKey (Default: 'B')
 
 
-Lower value = smoother updates (more CPU usage)
 
-Higher value = better performance (less smooth)
+Settings Keybind: Config.HUDSettings (Set this to a key to open the customization menu)
 
-🧠 HUD Behavior
 
-HUD only appears when the player is inside a vehicle
 
-HUD hides automatically when:
+Refresh Rate: Config.RefreshRate (Default: 100ms). Lower = smoother; Higher = better performance.
 
-Pause menu is open
 
-Map is open
 
-Seatbelt status is synced to the UI only when it changes (performance-friendly)
+🎮 Commands
 
-🔊 Included Assets
+/toggleSeatbelt - Manually buckle/unbuckle (Bound to 'B' by default).
 
-fuel-icon.png – fuel indicator icon
 
-buckle.ogg – seatbelt on sound
 
-unbuckle.ogg – seatbelt off sound
+/hudsettings - Opens the UI menu to adjust the HUD position and scale.
 
-All assets are loaded via ui.html.
+
 
 📁 File Structure
-DANIELGDM180_hud/
-│
+
+Plaintext
+
+DANIELGDM180\_hud/
+
 ├── fxmanifest.lua
-├── config.lua
+
+├── config.lua        # Main configuration
+
+├── README.md
+
 ├── client/
-│   └── client.lua
+
+│   └── client.lua    # Main logic \& physics
+
 └── html/
-    ├── ui.html
-    ├── fuel-icon.png
-    └── sounds/
-        ├── buckle.ogg
-        └── unbuckle.ogg
+
+&#x20;   ├── ui.html       # HUD \& Settings Menu
+
+&#x20;   ├── fuel-icon.png
+
+&#x20;   ├── engine-icon.png
+
+&#x20;   └── sounds/
+
+&#x20;       ├── buckle.ogg
+
+&#x20;       └── unbuckle.ogg
 
 🧪 Framework Support
 
-✅ Standalone
+This script is Standalone. It does not require ESX or QBCore, though it is fully compatible with both.
 
-✅ ESX
 
-✅ QBCore
-(No framework dependency — works client-side)
 
 👤 Author
 
 DANIELGDM180
 
+
+
 📜 License
 
-Free to use and modify for personal or server use.
-Do not resell without permission.
+Free to use and modify for personal or server use. Do not resell without permission.
+
