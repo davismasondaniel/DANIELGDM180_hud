@@ -76,7 +76,7 @@ To use this resource, you must have the following installed:
 
 
 
-ox\_lib https://github.com/CommunityOx/ox_lib (For notifications)
+ox_lib https://github.com/overextended/ox_lib (For notifications)
 
 
 
