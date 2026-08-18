@@ -4,12 +4,25 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Car HUD</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
   <style>
     body {
       margin: 0;
       background: none;
-      font-family: 'Inter', sans-serif;
+      font-family: 'Share Tech Mono', monospace;
       overflow: hidden;
+    }
+
+    @keyframes scanline-move {
+      0% { background-position: 0 0; }
+      100% { background-position: 0 100%; }
+    }
+
+    @keyframes readout-flicker {
+      0%, 96%, 100% { opacity: 1; }
+      97% { opacity: 0.82; }
+      98% { opacity: 1; }
     }
 
     #hud {
@@ -17,16 +30,30 @@
       bottom: 5%;
       left: 90%;
       transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.6);
+      background:
+        repeating-linear-gradient(
+          0deg,
+          rgba(255, 0, 0, 0.05) 0px,
+          rgba(255, 0, 0, 0.05) 1px,
+          rgba(0, 0, 0, 0) 2px,
+          rgba(0, 0, 0, 0) 4px
+        ),
+        rgba(5, 0, 0, 0.75);
+      background-size: 100% 4px, 100% 100%;
+      animation: scanline-move 6s linear infinite;
       padding: 15px 25px;
-      border-radius: 15px;
+      padding-left: 20px;
+      border-radius: 6px;
+      border-left: 4px solid #ff0000;
+      box-sizing: border-box;
       color: #fff;
+      font-family: 'Share Tech Mono', monospace;
       font-size: 16px;
       display: none;
       flex-direction: column;
       gap: 15px;
       align-items: stretch;
-      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      box-shadow: 0 0 10px rgba(0,0,0,0.5), inset 3px 0 8px rgba(255,0,0,0.15), -2px 0 12px rgba(255,0,0,0.35);
       transition: all 0.1s ease-out;
     }
 
@@ -55,26 +82,36 @@
 
     .fuel-bar {
       flex-grow: 1;
-      height: 14px;
-      background: #333;
-      border-radius: 4px;
+      height: 12px;
+      background: #1a0000;
+      border: 1px solid rgba(255,0,0,0.4);
+      border-radius: 2px;
       overflow: hidden;
+      box-shadow: inset 0 0 4px rgba(0,0,0,0.8);
     }
 
     .fuel-level {
       height: 100%;
-      background: #FFBF00;
+      background: linear-gradient(90deg, #FFBF00, #FFBF00);
+      box-shadow: 0 0 6px rgba(255,0,0,0.7);
       width: 100%;
+      transition: width 0.2s ease-out;
     }
 
     .label {
-      font-size: 14px;
-      opacity: 0.8;
+      font-size: 13px;
+      letter-spacing: 1px;
+      color: #ff3b3b;
+      opacity: 0.75;
+      text-transform: uppercase;
     }
 
     .value {
       font-weight: bold;
-      font-size: 16px;
+      font-size: 18px;
+      color: #fff;
+      text-shadow: 0 0 4px rgba(255,255,255,0.6), 0 0 10px rgba(255,0,0,0.8), 0 0 18px rgba(255,0,0,0.5);
+      animation: readout-flicker 4s infinite;
     }
 
     /* HUD Settings Menu Styles */
@@ -83,14 +120,27 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background: rgba(0, 0, 0, 0.8);
+      background:
+        repeating-linear-gradient(
+          0deg,
+          rgba(255, 0, 0, 0.05) 0px,
+          rgba(255, 0, 0, 0.05) 1px,
+          rgba(0, 0, 0, 0) 2px,
+          rgba(0, 0, 0, 0) 4px
+        ),
+        rgba(5, 0, 0, 0.88);
+      animation: scanline-move 6s linear infinite;
       padding: 30px;
-      border-radius: 20px;
+      padding-left: 26px;
+      border-radius: 8px;
+      border-left: 4px solid #ff0000;
+      box-sizing: border-box;
       color: #fff;
+      font-family: 'Share Tech Mono', monospace;
       display: none;
       flex-direction: column;
       gap: 20px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.7);
+      box-shadow: 0 0 20px rgba(0,0,0,0.7), -2px 0 14px rgba(255,0,0,0.35);
       width: 350px;
       max-width: 90%;
       z-index: 1001;
@@ -98,9 +148,12 @@
 
     #hud-settings h2 {
       text-align: center;
-      color: #ff0000;
+      color: #ff2b2b;
+      text-shadow: 0 0 6px rgba(255,0,0,0.8), 0 0 14px rgba(255,0,0,0.4);
       margin-bottom: 20px;
       font-size: 24px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
     }
 
     .setting-item {
@@ -110,8 +163,9 @@
     }
 
     .setting-item label {
-      font-size: 16px;
-      color: #ffffff;
+      font-size: 15px;
+      font-family: 'Share Tech Mono', monospace;
+      color: #ffdcdc;
     }
 
     .setting-item input[type="range"] {
