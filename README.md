@@ -1,186 +1,84 @@
-🚗 DANIELGDM180\_hud
-
-A lightweight, modern vehicle HUD for FiveM featuring a seatbelt system with ejection physics, fuel and engine health displays, and an in-game customization menu. Built for performance and clean aesthetics using ox\_lib and LegacyFuel.
-
-
-
-✨ Features
-
-🚘 Smart HUD: Only appears when inside a vehicle.
-
-
-
-⛓️ Seatbelt System:
-
-
-
-Toggleable with a configurable keybind.
-
-
-
-Prevents accidental vehicle exiting while buckled.
-
-
-
-Ejection Physics: High-speed impacts without a seatbelt will launch the player through the windshield into a ragdoll state.
-
-
-
-📊 Comprehensive Display:
-
-
-
-Speedometer (MPH).
-
-
-
-Gear Indicator \& RPM.
-
-
-
-Fuel Level (LegacyFuel integration).
-
-
-
-Engine Health Bar.
-
-
-
-🛠️ In-Game Settings: Customize the HUD scale, vertical, and horizontal positioning via a NUI menu.
-
-
-
-🔊 Immersive Audio: Custom buckle and unbuckle sound effects.
-
-
-
-🧠 Optimized:
-
-
-
-Configurable refresh rates.
-
-
-
-Automatically hides when the pause menu or map is open.
-
-
-
-Uses KVP to save your custom HUD layout across sessions.
-
-
-
-📦 Dependencies
-
-To use this resource, you must have the following installed:
-
-
-
-ox_lib https://github.com/overextended/ox_lib (For notifications)
-
-
-
-LegacyFuel https://github.com/Drift91/LegacyFuelEdit (For fuel data)
-
-
-
-🛠 Installation
-
-Download or clone this repository.
-
-
-
-Place the DANIELGDM180\_hud folder into your server's resources directory.
-
-
-
-Add the following to your server.cfg:
-
-
-
-Code snippet
-
-ensure ox\_lib
-
-ensure LegacyFuel
-
-ensure DANIELGDM180\_hud
-
-Restart your server.
-
-
-
-⚙️ Configuration
-
-Open config.lua to tweak the script to your liking:
-
-
-
-Seatbelt Keybind: Config.ToggleSeatbeltKey (Default: 'B')
-
-
-
-Settings Keybind: Config.HUDSettings (Set this to a key to open the customization menu)
-
-
-
-Refresh Rate: Config.RefreshRate (Default: 100ms). Lower = smoother; Higher = better performance.
-
-
-
-🎮 Commands
-
-/toggleSeatbelt - Manually buckle/unbuckle (Bound to 'B' by default).
-
-
-
-/hudsettings - Opens the UI menu to adjust the HUD position and scale.
-
-
-
-📁 File Structure
-
-Plaintext
-
-DANIELGDM180\_hud/
-
-├── fxmanifest.lua
-
-├── config.lua        # Main configuration
-
-├── README.md
-
+# DANIELGDM180_hud
+
+A lightweight, customizable vehicle HUD for FiveM built with `ox_lib` and `LegacyFuel`. Displays live speed, gear, RPM, fuel, engine health, and seatbelt status in a red/black scanline-styled readout, with a seatbelt/ejection system and a drag-free, slider-based position/scale editor.
+
+## Features
+
+- **Live vehicle readout** — MPH, gear, RPM, fuel %, and engine health %, updated on a configurable refresh rate.
+- **Seatbelt system**
+  - Toggle with a keybind (default `B`).
+  - Blocks exiting the vehicle while buckled.
+  - Automatically unbuckles (with sound + notification) on leaving the vehicle.
+  - Ejects the driver with a ragdoll if unbuckled and the vehicle decelerates sharply (crash detection).
+  - Buckle/unbuckle sound effects.
+- **HUD auto-hide** — HUD disappears while the pause menu / map is open, and reappears automatically.
+- **In-game HUD settings menu**
+  - Adjustable scale, vertical position, and horizontal position via sliders.
+  - Settings are saved per-player using KVP storage and persist across sessions.
+  - Reset-to-default option.
+- **ox_lib notifications** for seatbelt state, HUD saves, and resets.
+- Styled UI: red/black DANIELGDM180 theme, `Share Tech Mono` font.
+
+## Dependencies
+
+- [`ox_lib`](https://github.com/overextended/ox_lib)
+- [`LegacyFuel`](https://github.com/Drift91/LegacyFuelEdit)
+
+## Installation
+
+1. Drop the resource folder into your server's `resources` directory as `DANIELGDM180_hud`.
+2. Ensure `ox_lib` and `LegacyFuel` (or your fuel resource) are installed and started **before** this resource.
+3. Add to your `server.cfg`:
+   ```
+   ensure ox_lib
+   ensure LegacyFuel
+   ensure DANIELGDM180_hud
+   ```
+4. Restart your server or run `refresh` + `ensure DANIELGDM180_hud`.
+
+## File Structure
+
+```
+DANIELGDM180_hud/
 ├── client/
-
-│   └── client.lua    # Main logic \& physics
-
+│   └── client.lua
+├── config.lua
+├── fxmanifest.lua
 └── html/
+    ├── ui.html
+    ├── engine-icon.png
+    ├── fuel-icon.png
+    └── sounds/
+        ├── buckle.ogg
+        └── unbuckle.ogg
+```
 
-&#x20;   ├── ui.html       # HUD \& Settings Menu
+> **Note:** `fxmanifest.lua` currently references `client/client.lua` and `html/ui.html` — make sure your files sit in matching subfolders (`client/` and `html/`), or update the manifest paths to match your layout.
 
-&#x20;   ├── fuel-icon.png
+## Configuration (`config.lua`)
 
-&#x20;   ├── engine-icon.png
+| Setting | Description | Default |
+|---|---|---|
+| `Config.ToggleSeatbeltKey` | Keybind to toggle the seatbelt | `'B'` |
+| `Config.RefreshRate` | HUD update interval in ms (lower = smoother, more resource use) | `100` |
+| `Config.HUDSettings` | Keybind to open the HUD settings menu | `''` (unbound — bind via FiveM keybind settings or set a key here) |
 
-&#x20;   └── sounds/
+## Commands / Keybinds
 
-&#x20;       ├── buckle.ogg
+| Action | Default Key | Notes |
+|---|---|---|
+| Toggle seatbelt | `B` | Rebindable in-game (Settings → Key Bindings → FiveM) |
+| Open HUD settings | Unbound | Set `Config.HUDSettings` or bind manually |
 
-&#x20;       └── unbuckle.ogg
+## HUD Settings Menu
 
-🧪 Framework Support
+Open with the `hudsettings` command/keybind. From the menu you can:
+- **Scale** — 50%–150%
+- **Vertical Position** — 0%–95% from bottom
+- **Horizontal Position** — 5%–95% from left
 
-This script is Standalone. It does not require ESX or QBCore, though it is fully compatible with both.
+Click **Save** to persist your layout (stored via KVP, so it survives restarts), **Reset** to restore defaults, or **Close**/`Esc` to exit without changes.
 
+## Credits
 
-
-👤 Author
-
-DANIELGDM180
-
-
-
-📜 License
-
-Free to use and modify for personal or server use. Do not resell without permission.
-
+Developed by **DANIELGDM180** for the DANIELGDM180 Server.
