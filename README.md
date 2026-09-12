@@ -2,8 +2,6 @@
 
 Custom FiveM vehicle HUD by **DANIELGDM180**. Circular speedometer with RPM arc and gear indicator, fuel/engine side panel with a live odometer, a seatbelt system with ejection-on-crash, and an in-game HUD settings menu with saved positioning.
 
-https://github.com/davismasondaniel/DANIELGDM180_hud/blob/main/FiveM_b3889_GTAProcess_8nhCbpwy1n.png
-
 ## Features
 
 - **Speedometer** — analog gauge (mph) with tick marks, sweeping needle, and center digital readout.
