@@ -3,15 +3,26 @@ local lastSeatbeltStatus = false -- New variable to track the last sent seatbelt
 local uiHiddenByPause = false -- Tracks whether we hid the UI due to pause/map
 
 
--- Default HUD settings
-local defaultHudSettings = {
-    scale = 0.8,
-    bottom = 3,
-    left = 92
-}
+-- Default HUD settings (configurable in config.lua)
+local defaultHudSettings = Config.DefaultHudSettings
 
 -- Current HUD settings, loaded from KVP or default
 local currentHudSettings = {}
+
+-- jg-vehiclemileage unit ("miles" or "kilometers"), fetched once and cached
+local mileageUnit = nil
+local mileageUnitAbbr = "mi"
+
+local function getMileageUnit()
+    if mileageUnit then return end
+    local ok, unit = pcall(function()
+        return exports["jg-vehiclemileage"]:getUnit()
+    end)
+    if ok and unit then
+        mileageUnit = unit
+        mileageUnitAbbr = (unit == "kilometers") and "km" or "mi"
+    end
+end
 
 local function notify(type, title, description)
     lib.notify({
@@ -43,7 +54,7 @@ end
 
 -- Function to load HUD settings from KVP
 local function loadHudSettings()
-    local savedSettings = GetResourceKvpString("hud_settings")
+    local savedSettings = GetResourceKvpString(Config.KvpKey)
     if savedSettings then
         currentHudSettings = json.decode(savedSettings)
         -- Ensure all keys exist, use default if not
@@ -62,14 +73,14 @@ end
 
 -- Function to save HUD settings to KVP
 local function saveHudSettings(settings)
-    SetResourceKvp("hud_settings", json.encode(settings))
+    SetResourceKvp(Config.KvpKey, json.encode(settings))
     currentHudSettings = settings
     notify('success', 'HUD', 'HUD settings saved!')
 end
 
 -- Function to reset HUD settings to default
 local function resetHudSettings()
-    SetResourceKvp("hud_settings", json.encode(defaultHudSettings))
+    SetResourceKvp(Config.KvpKey, json.encode(defaultHudSettings))
     currentHudSettings = defaultHudSettings
     notify('info', 'HUD', 'HUD settings reset to default!')
 end
@@ -168,10 +179,21 @@ CreateThread(function()
             local fuel = exports["LegacyFuel"]:GetFuel(vehicle)
             local gear = GetVehicleCurrentGear(vehicle)
             local rpm = math.floor(GetVehicleCurrentRpm(vehicle) * 10000)
-            
+
             -- Get engine health (0-1000 range) and convert to percentage
             local engineHealth = GetVehicleEngineHealth(vehicle)
             local enginePercent = (engineHealth / 10)
+
+            -- jg-vehiclemileage: distance travelled by this vehicle
+            getMileageUnit()
+            local mileage = 0
+            local ok, mileageKm = pcall(function()
+                return exports["jg-vehiclemileage"]:getMileage()
+            end)
+            if ok and mileageKm then
+                mileage = (mileageUnit == "kilometers") and mileageKm or (mileageKm * 0.621371)
+                mileage = math.floor(mileage)
+            end
 
             SendNUIMessage({
                 type = "hud",
@@ -181,7 +203,9 @@ CreateThread(function()
                 engine = enginePercent, -- New data sent to UI
                 seatbelt = seatbeltOn,
                 gear = gear,
-                rpm = rpm
+                rpm = rpm,
+                mileage = mileage,
+                mileageUnit = mileageUnitAbbr
             })
         else
             SendNUIMessage({type = "hud", display = false})

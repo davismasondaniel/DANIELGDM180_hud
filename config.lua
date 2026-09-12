@@ -18,3 +18,14 @@ Config.RefreshRate = 100
 -- Default: "" (keyboard)
 -- You can find a list of FiveM keybinds here: https://docs.fivem.net/docs/game-references/controls/
 Config.HUDSettings = ''
+
+-- KVP key used to persist HUD position/scale settings (per-player, via SetResourceKvp)
+-- Change this if it clashes with another resource's KVP namespace
+Config.KvpKey = 'DANIELGDM180_hud_hud_settings'
+
+-- Default HUD position/scale, used on first run and by the "Reset" button in the settings menu
+Config.DefaultHudSettings = {
+    scale = 0.84,
+    bottom = 2,
+    left = 91
+}

@@ -3,9 +3,8 @@ game 'gta5'
 lua54 'yes'
 
 author 'DANIELGDM180'
-description 'car hud'
-version '1.0.0'
-
+description 'Vehicle HUD with speedometer, RPM, fuel, engine health, seatbelt/ejection system, and live odometer'
+version '2.0.0'
 
 ui_page 'html/ui.html'
 
@@ -29,4 +28,5 @@ shared_scripts {
 dependencies {
     'LegacyFuel',
     'ox_lib',
+    'jg-vehiclemileage',
 }

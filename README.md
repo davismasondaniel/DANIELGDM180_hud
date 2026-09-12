@@ -1,83 +1,92 @@
-# DANIELGDM180_hud
+# DANIELGDM180_hud 2.0
 
-A lightweight, customizable vehicle HUD for FiveM built with `ox_lib` and `LegacyFuel`. Displays live speed, gear, RPM, fuel, engine health, and seatbelt status in a red/black scanline-styled readout, with a seatbelt/ejection system and a drag-free, slider-based position/scale editor.
+Custom FiveM vehicle HUD by **DANIELGDM180**. Circular speedometer with RPM arc and gear indicator, fuel/engine side panel with a live odometer, a seatbelt system with ejection-on-crash, and an in-game HUD settings menu with saved positioning.
 
 ## Features
 
-- **Live vehicle readout** — MPH, gear, RPM, fuel %, and engine health %, updated on a configurable refresh rate.
+- **Speedometer** — analog gauge (mph) with tick marks, sweeping needle, and center digital readout.
+- **RPM arc** — glowing arc around the gauge edge that fills with engine RPM.
+- **Gear indicator** — shows current gear, `R` for reverse, `P` for park/neutral.
+- **Fuel bar** — live fuel percentage via `LegacyFuel`.
+- **Engine health bar** — live engine health percentage, turns red below 30%.
+- **Live odometer** — per-vehicle mileage via `jg-vehiclemileage`, in miles or km depending on that resource's configured unit.
 - **Seatbelt system**
-  - Toggle with a keybind (default `B`).
-  - Blocks exiting the vehicle while buckled.
-  - Automatically unbuckles (with sound + notification) on leaving the vehicle.
-  - Ejects the driver with a ragdoll if unbuckled and the vehicle decelerates sharply (crash detection).
+  - Toggle with a configurable keybind (default `B`).
   - Buckle/unbuckle sound effects.
-- **HUD auto-hide** — HUD disappears while the pause menu / map is open, and reappears automatically.
-- **In-game HUD settings menu**
-  - Adjustable scale, vertical position, and horizontal position via sliders.
-  - Settings are saved per-player using KVP storage and persist across sessions.
-  - Reset-to-default option.
-- **ox_lib notifications** for seatbelt state, HUD saves, and resets.
-- Styled UI: red/black DANIELGDM180 theme, `Share Tech Mono` font.
+  - Locks you in the vehicle while buckled (disables the exit control).
+  - If unbuckled and the vehicle decelerates hard (crash), you're ejected and ragdolled.
+  - Auto-unbuckles (with notification) when you leave the vehicle.
+- **HUD settings menu** — in-game sliders for scale, and vertical/horizontal position, opened with a configurable keybind. Settings persist across sessions via KVP.
+- **Pause-menu aware** — HUD hides automatically when the pause menu/map is open.
+- Optimized NUI updates: the UI only touches the DOM when a value actually changes, avoiding unnecessary CEF repaints/flicker.
 
 ## Dependencies
 
 - [`ox_lib`](https://github.com/overextended/ox_lib)
 - [`LegacyFuel`](https://github.com/Drift91/LegacyFuelEdit)
+- [`jg-vehiclemileage`] use this one if vMenu (https://github.com/davismasondaniel/jg-vehiclemileage) or (https://github.com/jgscripts/jg-vehiclemileage)
+
+Make sure all three are installed and started **before** this resource in your `server.cfg`.
 
 ## Installation
 
-1. Drop the resource folder into your server's `resources` directory as `DANIELGDM180_hud`.
-2. Ensure `ox_lib` and `LegacyFuel` (or your fuel resource) are installed and started **before** this resource.
-3. Add to your `server.cfg`:
+1. Drop this resource folder into your server's `resources` directory.
+2. Add to `server.cfg`:
    ```
    ensure ox_lib
    ensure LegacyFuel
+   ensure jg-vehiclemileage
    ensure DANIELGDM180_hud
    ```
-4. Restart your server or run `refresh` + `ensure DANIELGDM180_hud`.
+3. Confirm the folder layout matches what `fxmanifest.lua` expects:
+   ```
+   ├── fxmanifest.lua
+   ├── config.lua
+   ├── client/
+   │   └── client.lua
+   └── html/
+       ├── ui.html
+       ├── fuel-icon.png
+       ├── engine-icon.png
+       └── sounds/
+           ├── buckle.ogg
+           └── unbuckle.ogg
+   ```
+4. Restart the resource.
 
-## File Structure
+## Configuration
 
-```
-DANIELGDM180_hud/
-├── client/
-│   └── client.lua
-├── config.lua
-├── fxmanifest.lua
-└── html/
-    ├── ui.html
-    ├── engine-icon.png
-    ├── fuel-icon.png
-    └── sounds/
-        ├── buckle.ogg
-        └── unbuckle.ogg
-```
+All settings are in `config.lua`:
 
-> **Note:** `fxmanifest.lua` currently references `client/client.lua` and `html/ui.html` — make sure your files sit in matching subfolders (`client/` and `html/`), or update the manifest paths to match your layout.
-
-## Configuration (`config.lua`)
-
-| Setting | Description | Default |
+| Setting | Default | Description |
 |---|---|---|
-| `Config.ToggleSeatbeltKey` | Keybind to toggle the seatbelt | `'B'` |
-| `Config.RefreshRate` | HUD update interval in ms (lower = smoother, more resource use) | `100` |
-| `Config.HUDSettings` | Keybind to open the HUD settings menu | `''` (unbound — bind via FiveM keybind settings or set a key here) |
+| `Config.ToggleSeatbeltKey` | `'B'` | Keybind to toggle the seatbelt |
+| `Config.RefreshRate` | `100` (ms) | How often the HUD data updates (lower = smoother, more resource usage) |
+| `Config.HUDSettings` | `''` (unbound) | Keybind to open the HUD position/scale settings menu |
+| `Config.KvpKey` | `'hud_settings'` | KVP key used to persist saved HUD position/scale |
+| `Config.DefaultHudSettings` | `{scale=0.8, bottom=3, left=92}` | Default/reset HUD position and scale |
+
+Players can rebind both keys themselves in FiveM's Keybind settings (under the resource's mapped controls).
 
 ## Commands / Keybinds
 
 | Action | Default Key | Notes |
 |---|---|---|
-| Toggle seatbelt | `B` | Rebindable in-game (Settings → Key Bindings → FiveM) |
-| Open HUD settings | Unbound | Set `Config.HUDSettings` or bind manually |
+| Toggle seatbelt | `B` | Only works while in a vehicle |
+| Open HUD settings | Unbound | Set `Config.HUDSettings` or rebind in-game |
 
-## HUD Settings Menu
+In the HUD settings menu:
+- **Scale**, **Bottom position**, **Left position** sliders adjust the HUD live.
+- **Save** persists your settings (stored via KVP, survives restarts).
+- **Reset** restores the default position/scale.
+- `Esc` or `T` also closes the menu.
 
-Open with the `hudsettings` command/keybind. From the menu you can:
-- **Scale** — 50%–150%
-- **Vertical Position** — 0%–95% from bottom
-- **Horizontal Position** — 5%–95% from left
+## How it works
 
-Click **Save** to persist your layout (stored via KVP, so it survives restarts), **Reset** to restore defaults, or **Close**/`Esc` to exit without changes.
+- `client/client.lua` runs a loop every `Config.RefreshRate` ms that reads vehicle speed, fuel (`LegacyFuel`), engine health, RPM, gear, and mileage (`jg-vehiclemileage`), then pushes it to the NUI via `SendNUIMessage`.
+- `html/ui.html` renders the gauge/panels and only updates DOM elements whose values actually changed, to minimize CEF repaint flicker.
+- Seatbelt state is tracked client-side; the "leave vehicle" control is disabled while buckled, and a hard-deceleration check while unbuckled triggers an ejection + ragdoll.
+- HUD position/scale settings are saved to a resource KVP (`hud_settings`) and reapplied on UI load.
 
 ## Credits
 

@@ -3,212 +3,359 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Car HUD</title>
+  <title>DANIELGDM180_hud</title>
   <style>
+
+    :root {
+      --red: #ff2b2b;
+      --red-dim: #8a0f0f;
+      --red-glow: rgba(255, 43, 43, 0.55);
+      --panel: rgba(8, 8, 10, 0.82);
+      --panel-edge: rgba(255, 127, 17, 0.55);
+      --text: #f2f2f2;
+      --text-dim: #9a9a9a;
+      --green: #26d97a;
+
+      /* Classic automotive palette — scoped to the speedometer gauge only */
+      --gauge-accent: #ff7f11;
+      --gauge-accent-dim: #7a3d00;
+      --gauge-accent-glow: rgba(255, 127, 17, 0.55);
+      --gauge-edge: rgba(255, 127, 17, 0.35);
+      --gauge-white: #f5f5f2;
+    }
+
+    * { box-sizing: border-box; }
+
     body {
       margin: 0;
       background: none;
-      font-family: 'Inter', sans-serif;
+      font-family: 'Rajdhani', 'Segoe UI', Arial, sans-serif;
       overflow: hidden;
     }
 
     #hud {
       position: absolute;
-      bottom: 5%;
-      left: 90%;
+      bottom: 3%;
+      left: 92%;
       transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.6);
-      padding: 15px 25px;
-      border-radius: 15px;
-      color: #fff;
-      font-size: 16px;
       display: none;
-      flex-direction: column;
-      gap: 15px;
-      align-items: stretch;
-      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      flex-direction: row;
+      align-items: flex-end;
+      gap: 14px;
       transition: all 0.1s ease-out;
     }
 
-    .hud-top-row {
-      display: flex;
-      gap: 30px;
-      justify-content: center;
+    /* ---------- Gauge cluster ---------- */
+    .gauge-wrap {
+      position: relative;
+      width: 220px;
+      height: 220px;
+      background:
+        radial-gradient(circle at 50% 45%, rgba(30, 4, 4, 0.55) 0%, rgba(5, 5, 6, 0.9) 70%),
+        var(--panel);
+      border-radius: 50%;
+      border: 2px solid var(--gauge-edge);
+      box-shadow:
+        0 0 18px rgba(255, 127, 17, 0.25),
+        inset 0 0 24px rgba(0, 0, 0, 0.75);
+      overflow: hidden;
     }
 
-    .hud-section {
+    .gauge-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .tick-major {
+      stroke: var(--gauge-white);
+      stroke-width: 2.5;
+      opacity: 0.95;
+    }
+    .tick-minor {
+      stroke: var(--gauge-white);
+      stroke-width: 1.3;
+      opacity: 0.45;
+    }
+    .tick-label {
+      fill: var(--gauge-white);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      text-anchor: middle;
+    }
+    .rpm-track {
+      fill: none;
+      stroke: rgba(255, 127, 17, 0.18);
+      stroke-width: 5;
+    }
+    .rpm-fill {
+      fill: none;
+      stroke: var(--gauge-accent);
+      stroke-width: 5;
+      stroke-linecap: round;
+      filter: drop-shadow(0 0 4px var(--gauge-accent-glow));
+      transition: stroke-dasharray 0.08s linear;
+    }
+
+    .gauge-readout {
+      position: absolute;
+      top: 54%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      pointer-events: none;
+    }
+    .speed-value {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 40px;
+      font-weight: 700;
+      color: var(--gauge-white);
+      line-height: 1;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
+    }
+    .speed-unit {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 3px;
+      color: var(--gauge-accent);
+      margin-top: 2px;
+    }
+
+    .gear-badge {
+      position: absolute;
+      top: 33%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 42px;
+      height: 42px;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 23px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .seatbelt-badge {
+      position: absolute;
+      bottom: 16%;
+      left: 50%;
+      transform: translate(-50%, 0);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      padding: 3px 10px;
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.55);
+      border: 1px solid var(--red-dim);
+      color: var(--red);
+      transition: color 0.15s, border-color 0.15s, box-shadow 0.15s;
+    }
+    .seatbelt-badge.on {
+      color: var(--green);
+      border-color: var(--green);
+      box-shadow: 0 0 8px rgba(38, 217, 122, 0.4);
+    }
+
+    /* ---------- Side bars (fuel / engine) ---------- */
+    .side-panel {
       display: flex;
       flex-direction: column;
-      align-items: center;
+      gap: 10px;
+      background: var(--panel);
+      border: 1px solid var(--panel-edge);
+      border-radius: 10px;
+      padding: 12px 14px;
+      box-shadow: 0 0 14px rgba(255, 43, 43, 0.15), inset 0 0 12px rgba(0,0,0,0.6);
+      margin-bottom: 6px;
+      min-width: 130px;
+      position: relative;
     }
 
-    .fuel-section {
+    .stat-row {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
 
-    .fuel-icon {
-      width: 24px;
-      height: 24px;
+    .stat-icon {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      filter: drop-shadow(0 0 2px rgba(255,43,43,0.5));
+      opacity: 0.9;
     }
 
-    .fuel-bar {
+    .stat-bar {
       flex-grow: 1;
-      height: 14px;
-      background: #333;
+      height: 10px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 43, 43, 0.25);
       border-radius: 4px;
       overflow: hidden;
     }
 
-    .fuel-level {
+    .stat-fill {
       height: 100%;
-      background: #FFBF00;
       width: 100%;
+      transition: width 0.15s ease-out, background 0.15s ease-out;
     }
 
-    .label {
-      font-size: 14px;
-      opacity: 0.8;
+    .fuel-fill { background: linear-gradient(90deg, #ffbf00, #ff8a00); }
+    .engine-fill { background: linear-gradient(90deg, var(--green), #05c02e); }
+
+    .stat-pct {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      color: var(--text-dim);
+      width: 32px;
+      text-align: right;
+      flex-shrink: 0;
     }
 
-    .value {
-      font-weight: bold;
-      font-size: 16px;
+    .odo-row {
+      justify-content: space-between;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 43, 43, 0.2);
+    }
+    .odo-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: var(--red);
+      opacity: 0.85;
+    }
+    .odo-value {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 13px;
+      color: var(--text);
     }
 
-    /* HUD Settings Menu Styles */
+    /* ---------- HUD Settings Menu ---------- */
     #hud-settings {
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background: rgba(0, 0, 0, 0.8);
+      background: rgba(6, 6, 7, 0.92);
       padding: 30px;
-      border-radius: 20px;
-      color: #fff;
+      border-radius: 14px;
+      color: var(--text);
       display: none;
       flex-direction: column;
       gap: 20px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.7);
+      box-shadow: 0 0 24px rgba(255, 43, 43, 0.35), inset 0 0 20px rgba(0,0,0,0.7);
+      border: 1px solid var(--panel-edge);
       width: 350px;
       max-width: 90%;
       z-index: 1001;
+      font-family: 'Rajdhani', 'Segoe UI', Arial, sans-serif;
     }
 
     #hud-settings h2 {
       text-align: center;
-      color: #ff0000;
-      margin-bottom: 20px;
-      font-size: 24px;
+      color: var(--red);
+      margin: 0 0 6px 0;
+      font-size: 22px;
+      letter-spacing: 2px;
+      text-shadow: 0 0 10px var(--red-glow);
     }
 
-    .setting-item {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .setting-item label {
-      font-size: 16px;
-      color: #ffffff;
-    }
+    .setting-item { display: flex; flex-direction: column; gap: 8px; }
+    .setting-item label { font-size: 15px; color: var(--text); }
 
     .setting-item input[type="range"] {
       width: 100%;
-      height: 8px;
-      background: #555;
+      height: 6px;
+      background: rgba(255, 43, 43, 0.2);
       border-radius: 5px;
       outline: none;
-      opacity: 0.9;
-      transition: opacity .2s;
+      appearance: none;
     }
-
     .setting-item input[type="range"]::-webkit-slider-thumb {
       appearance: none;
-      width: 20px;
-      height: 20px;
-      background: #ffffff;
+      width: 18px;
+      height: 18px;
+      background: var(--red);
       border-radius: 50%;
       cursor: grab;
-      box-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
+      box-shadow: 0 0 8px var(--red-glow);
     }
-
     .setting-item input[type="range"]::-moz-range-thumb {
-      width: 20px;
-      height: 20px;
-      background: #ffffff;
+      width: 18px;
+      height: 18px;
+      background: var(--red);
       border-radius: 50%;
       cursor: grab;
-      box-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
+      border: none;
+      box-shadow: 0 0 8px var(--red-glow);
     }
 
-    .button-group {
-      display: flex;
-      justify-content: space-around;
-      margin-top: 20px;
-    }
+    .button-group { display: flex; justify-content: space-around; margin-top: 10px; }
 
     .settings-button {
-      padding: 12px 25px;
-      border: none;
-      border-radius: 10px;
+      padding: 10px 22px;
+      border: 1px solid transparent;
+      border-radius: 8px;
       cursor: pointer;
-      font-size: 16px;
-      font-weight: bold;
-      transition: background-color 0.3s ease, transform 0.2s ease;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 13px;
+      letter-spacing: 1px;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
-
-    .settings-button.save { background-color: #4CAF50; color: white; }
-    .settings-button.save:hover { background-color: #45a049; transform: translateY(-2px); }
-    .settings-button.reset { background-color: #F44336; color: white; }
-    .settings-button.reset:hover { background-color: #da190b; transform: translateY(-2px); }
-    .settings-button.close { background-color: #555; color: white; }
-    .settings-button.close:hover { background-color: #333; transform: translateY(-2px); }
+    .settings-button.save { background: var(--red); color: #0d0d0d; }
+    .settings-button.save:hover { transform: translateY(-2px); box-shadow: 0 0 10px var(--red-glow); }
+    .settings-button.reset { background: transparent; border-color: var(--red-dim); color: var(--red); }
+    .settings-button.reset:hover { transform: translateY(-2px); box-shadow: 0 0 10px var(--red-glow); }
+    .settings-button.close { background: rgba(255,255,255,0.08); color: var(--text); }
+    .settings-button.close:hover { transform: translateY(-2px); }
   </style>
 </head>
 <body>
+
 <div id="hud">
-  <div class="hud-top-row">
-    <div class="hud-section">
-      <div class="label">MPH</div>
-      <div class="value" id="mph">0</div>
+  <div class="side-panel">
+    <div class="stat-row">
+      <img src="fuel-icon.png" alt="Fuel" class="stat-icon" />
+      <div class="stat-bar"><div class="stat-fill fuel-fill" id="fuelBar"></div></div>
+      <div class="stat-pct" id="fuelPct">100%</div>
     </div>
-
-    <div class="hud-section">
-      <div class="label">GEAR</div>
-      <div class="value" id="gear">N</div>
+    <div class="stat-row">
+      <img src="engine-icon.png" alt="Engine" class="stat-icon" />
+      <div class="stat-bar"><div class="stat-fill engine-fill" id="engineBar"></div></div>
+      <div class="stat-pct" id="enginePct">100%</div>
     </div>
-
-    <div class="hud-section">
-      <div class="label">RPM</div>
-      <div class="value" id="rpm">0</div>
-    </div>
-
-    <div class="hud-section">
-      <div class="label">SEATBELT</div>
-      <div class="value" id="seatbelt">OFF</div>
+    <div class="stat-row odo-row">
+      <div class="odo-label">MI</div>
+      <div class="odo-value" id="odoValue">0 mi</div>
     </div>
   </div>
 
- <div class="fuel-section">
-    <img src="fuel-icon.png" alt="Fuel" class="fuel-icon" />
-    <div class="bar fuel-bar">
-      <div class="fuel-level" id="fuelBar"></div>
-    </div>
-  </div>
+  <div class="gauge-wrap">
+    <svg class="gauge-svg" viewBox="0 0 220 220">
+      <!-- RPM outer ring -->
+      <circle class="rpm-track" id="rpmTrack" cx="110" cy="110" r="102"></circle>
+      <circle class="rpm-fill" id="rpmArc" cx="110" cy="110" r="102"></circle>
 
-  <div class="fuel-section">
-    <img src="engine-icon.png" alt="Engine" class="fuel-icon" />
-    <div class="bar fuel-bar">
-      <div class="fuel-level" id="engineBar" style="background: #05c02e;"></div>
+      <!-- Ticks injected by JS -->
+      <g id="ticks"></g>
+    </svg>
+
+    <div class="gear-badge" id="gear">N</div>
+    <div class="gauge-readout">
+      <div class="speed-value" id="mph">0</div>
+      <div class="speed-unit">MPH</div>
     </div>
+    <div class="seatbelt-badge" id="seatbelt">BELT OFF</div>
+
   </div>
 </div>
 
 <div id="hud-settings">
-  <h2>HUD Settings</h2>
+  <h2>HUD SETTINGS</h2>
   <div class="setting-item">
     <label for="hud-scale">Scale: <span id="scale-value">100%</span></label>
     <input type="range" id="hud-scale" min="50" max="150" value="100">
@@ -243,11 +390,63 @@
     const bottomValueSpan = document.getElementById("bottom-value");
     const leftValueSpan = document.getElementById("left-value");
 
-    let currentHudSettings = {
-      scale: 1.0,
-      bottom: 5,
-      left: 90
-    };
+    let currentHudSettings = { scale: 1.0, bottom: 5, left: 90 };
+
+    // ---------- Gauge geometry ----------
+    const MAX_SPEED = 160;      // mph at full needle sweep
+    const MAX_RPM = 10000;      // matches client.lua rpm scaling (rpm * 10000)
+    const START_ANGLE = -125;   // degrees, needle position at 0 mph
+    const SWEEP = 250;          // total degrees of sweep
+    const CX = 110, CY = 110, R = 102;
+    const CIRC = 2 * Math.PI * R; // ~641
+
+    const rpmArc = document.getElementById("rpmArc");
+    const rpmTrack = document.getElementById("rpmTrack");
+    const ticksGroup = document.getElementById("ticks");
+
+    // Rotate the circle's natural dash-start (3 o'clock) to line up with our
+    // gauge's 0-value bearing (measured clockwise from 12 o'clock).
+    const ARC_ROTATE = START_ANGLE - 90;
+    const ARC_LEN = (SWEEP / 360) * CIRC;
+    rpmTrack.setAttribute('transform', `rotate(${ARC_ROTATE} ${CX} ${CY})`);
+    rpmTrack.setAttribute('stroke-dasharray', `${ARC_LEN.toFixed(1)} ${(CIRC - ARC_LEN).toFixed(1)}`);
+    rpmArc.setAttribute('transform', `rotate(${ARC_ROTATE} ${CX} ${CY})`);
+
+    function polar(cx, cy, r, angleDeg) {
+      const rad = (angleDeg - 90) * (Math.PI / 180);
+      return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+    }
+
+    function buildTicks() {
+      const majorStep = 20; // mph per major tick (angle spacing only)
+      const minorStep = 10; // mph per minor tick
+      let svg = '';
+      for (let v = 0; v <= MAX_SPEED; v += minorStep) {
+        const angle = START_ANGLE + (v / MAX_SPEED) * SWEEP;
+        const isMajor = v % majorStep === 0;
+        const outer = polar(CX, CY, 88, angle);
+        const inner = polar(CX, CY, isMajor ? 76 : 80, angle);
+        svg += `<line class="${isMajor ? 'tick-major' : 'tick-minor'}" x1="${inner.x.toFixed(1)}" y1="${inner.y.toFixed(1)}" x2="${outer.x.toFixed(1)}" y2="${outer.y.toFixed(1)}" />`;
+        if (isMajor) {
+          // Label major ticks with RPM (in thousands) instead of speed
+          const rpmValue = Math.round((v / MAX_SPEED) * MAX_RPM / 1000);
+          const label = polar(CX, CY, 64, angle);
+          svg += `<text class="tick-label" x="${label.x.toFixed(1)}" y="${(label.y + 4).toFixed(1)}">${rpmValue}</text>`;
+        }
+      }
+      ticksGroup.innerHTML = svg;
+    }
+    buildTicks();
+
+    function setSpeed(mph) {
+    }
+
+    function setRpm(rpm) {
+      const clamped = Math.max(0, Math.min(rpm, MAX_RPM));
+      const frac = clamped / MAX_RPM;
+      const dash = frac * ARC_LEN;
+      rpmArc.setAttribute('stroke-dasharray', `${dash.toFixed(1)} ${(CIRC - dash).toFixed(1)}`);
+    }
 
     function applyHudSettings(settings) {
       hud.style.transform = `translateX(-50%) scale(${settings.scale})`;
@@ -324,21 +523,80 @@
       });
     });
 
+    const mphEl = document.getElementById("mph");
+    const fuelBarEl = document.getElementById("fuelBar");
+    const fuelPctEl = document.getElementById("fuelPct");
+    const engineBarEl = document.getElementById("engineBar");
+    const enginePctEl = document.getElementById("enginePct");
+    const seatbeltEl = document.getElementById("seatbelt");
+    const gearEl = document.getElementById("gear");
+    const odoValueEl = document.getElementById("odoValue");
+
+    let last = {
+      display: null, speed: null, rpm: null, fuel: null, engine: null,
+      engineLow: null, seatbelt: null, gear: null, mileage: null
+    };
+
     window.addEventListener("message", function (event) {
       const data = event.data;
-      
-        if (data.type === "hud") {
-        hud.style.display = data.display ? "flex" : "none";
+
+      if (data.type === "hud") {
+        if (data.display !== last.display) {
+          hud.style.display = data.display ? "flex" : "none";
+          last.display = data.display;
+        }
+
         if (data.display) {
-          document.getElementById("mph").innerText = data.speed;
-          document.getElementById("fuelBar").style.width = `${data.fuel}%`;
-          document.getElementById("engineBar").style.width = `${data.engine}%`;
-          document.getElementById("seatbelt").innerText = data.seatbelt ? "ON" : "OFF";
-          document.getElementById("gear").innerText = data.gear === 0 ? "R" : (data.gear === -1 ? "P" : data.gear);
-          document.getElementById("rpm").innerText = data.rpm;
+          if (data.speed !== last.speed) {
+            mphEl.innerText = data.speed;
+            setSpeed(data.speed);
+            last.speed = data.speed;
+          }
+
+          if (data.rpm !== last.rpm) {
+            setRpm(data.rpm);
+            last.rpm = data.rpm;
+          }
+
+          const fuel = Math.max(0, Math.min(100, data.fuel));
+          if (fuel !== last.fuel) {
+            fuelBarEl.style.width = `${fuel}%`;
+            fuelPctEl.innerText = `${Math.round(fuel)}%`;
+            last.fuel = fuel;
+          }
+
+          const engine = Math.max(0, Math.min(100, data.engine));
+          if (engine !== last.engine) {
+            engineBarEl.style.width = `${engine}%`;
+            enginePctEl.innerText = `${Math.round(engine)}%`;
+            const engineLow = engine < 30;
+            if (engineLow !== last.engineLow) {
+              engineBarEl.style.background = engineLow ? '#ff2b2b' : '';
+              last.engineLow = engineLow;
+            }
+            last.engine = engine;
+          }
+
+          if (data.seatbelt !== last.seatbelt) {
+            seatbeltEl.innerText = data.seatbelt ? "BELT ON" : "BELT OFF";
+            seatbeltEl.classList.toggle("on", !!data.seatbelt);
+            last.seatbelt = data.seatbelt;
+          }
+
+          if (data.gear !== last.gear) {
+            gearEl.innerText = data.gear === 0 ? "R" : (data.gear === -1 ? "P" : data.gear);
+            last.gear = data.gear;
+          }
+
+          if (data.mileage !== last.mileage) {
+            odoValueEl.innerText = `${data.mileage} ${data.mileageUnit || 'mi'}`;
+            last.mileage = data.mileage;
+          }
         }
       } else if (data.type === "seatbelt") {
-        document.getElementById("seatbelt").innerText = data.status ? "ON" : "OFF";
+        seatbeltEl.innerText = data.status ? "BELT ON" : "BELT OFF";
+        seatbeltEl.classList.toggle("on", !!data.status);
+        last.seatbelt = data.status;
         if (data.playSound) {
           const audio = document.getElementById(data.playSound);
           if (audio) audio.play();
@@ -361,19 +619,19 @@
     });
 
     document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' || event.key === 't') {
-            if (hudSettings.style.display === "flex") {
-                hudSettings.style.display = "none";
-                fetch(`https://${GetParentResourceName()}/closeUI`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json; charset=UTF-8' },
-                    body: JSON.stringify({}),
-                });
-            }
+      if (event.key === 'Escape' || event.key === 't') {
+        if (hudSettings.style.display === "flex") {
+          hudSettings.style.display = "none";
+          fetch(`https://${GetParentResourceName()}/closeUI`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+            body: JSON.stringify({}),
+          });
         }
+      }
     });
 
-    window.onload = function() {
+    window.onload = function () {
       fetch(`https://${GetParentResourceName()}/uiReady`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json; charset=UTF-8' },
