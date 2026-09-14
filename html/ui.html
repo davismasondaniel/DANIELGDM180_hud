@@ -438,9 +438,6 @@
     }
     buildTicks();
 
-    function setSpeed(mph) {
-    }
-
     function setRpm(rpm) {
       const clamped = Math.max(0, Math.min(rpm, MAX_RPM));
       const frac = clamped / MAX_RPM;
@@ -549,7 +546,6 @@
         if (data.display) {
           if (data.speed !== last.speed) {
             mphEl.innerText = data.speed;
-            setSpeed(data.speed);
             last.speed = data.speed;
           }
 

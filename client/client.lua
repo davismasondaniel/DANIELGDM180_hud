@@ -1,7 +1,6 @@
 local seatbeltOn = false
-local lastSeatbeltStatus = false -- New variable to track the last sent seatbelt status
+local lastSeatbeltStatus = false -- Tracks the last sent seatbelt status
 local uiHiddenByPause = false -- Tracks whether we hid the UI due to pause/map
-
 
 -- Default HUD settings (configurable in config.lua)
 local defaultHudSettings = Config.DefaultHudSettings
@@ -9,19 +8,51 @@ local defaultHudSettings = Config.DefaultHudSettings
 -- Current HUD settings, loaded from KVP or default
 local currentHudSettings = {}
 
+-- Cache export tables once instead of re-resolving them via the exports
+-- metatable on every tick (cheap, but adds up at 10hz+ over long sessions).
+local LegacyFuel = exports['LegacyFuel']
+local VehicleMileage = exports['jg-vehiclemileage']
+
 -- jg-vehiclemileage unit ("miles" or "kilometers"), fetched once and cached
 local mileageUnit = nil
-local mileageUnitAbbr = "mi"
+local mileageUnitAbbr = 'mi'
+local mileageUnitTriesLeft = 5 -- stop retrying forever if the export never resolves
 
 local function getMileageUnit()
-    if mileageUnit then return end
+    if mileageUnit or mileageUnitTriesLeft <= 0 then return end
     local ok, unit = pcall(function()
-        return exports["jg-vehiclemileage"]:getUnit()
+        return VehicleMileage:getUnit()
     end)
     if ok and unit then
         mileageUnit = unit
-        mileageUnitAbbr = (unit == "kilometers") and "km" or "mi"
+        mileageUnitAbbr = (unit == 'kilometers') and 'km' or 'mi'
+    else
+        mileageUnitTriesLeft = mileageUnitTriesLeft - 1
     end
+end
+
+-- Mileage doesn't need to be re-fetched at the full HUD refresh rate since
+-- it's only ever displayed as a floored integer. Throttle it separately.
+local MILEAGE_REFRESH_MS = 500
+local lastMileageFetch = 0
+local cachedMileage = 0
+
+local function getMileage(now)
+    if now - lastMileageFetch < MILEAGE_REFRESH_MS then
+        return cachedMileage
+    end
+    lastMileageFetch = now
+
+    getMileageUnit()
+
+    local ok, mileageKm = pcall(function()
+        return VehicleMileage:getMileage()
+    end)
+    if ok and mileageKm then
+        local mileage = (mileageUnit == 'kilometers') and mileageKm or (mileageKm * 0.621371)
+        cachedMileage = math.floor(mileage)
+    end
+    return cachedMileage
 end
 
 local function notify(type, title, description)
@@ -32,7 +63,9 @@ local function notify(type, title, description)
     })
 end
 
--- Force the player into ragdoll for a duration (ms). Re-applies each frame for reliability.
+-- Force the player into ragdoll for a duration (ms). Re-applies periodically
+-- for reliability without spinning at Wait(0) (a 5s Wait(0) loop is a
+-- needless full-tick-rate spin; ragdoll doesn't need re-checking every frame).
 local function forceRagdoll(ped, durationMs)
     if not ped or ped == 0 then return end
     durationMs = durationMs or 3000
@@ -46,11 +79,10 @@ local function forceRagdoll(ped, durationMs)
             if not IsPedRagdoll(ped) then
                 SetPedToRagdoll(ped, 1000, 1000, 0, false, false, false)
             end
-            Wait(0)
+            Wait(50)
         end
     end)
 end
-
 
 -- Function to load HUD settings from KVP
 local function loadHudSettings()
@@ -66,7 +98,7 @@ local function loadHudSettings()
     end
     -- Send loaded settings to UI immediately
     SendNUIMessage({
-        type = "applySettings",
+        type = 'applySettings',
         settings = currentHudSettings
     })
 end
@@ -86,23 +118,21 @@ local function resetHudSettings()
 end
 
 -- Register command to toggle seatbelt
-RegisterCommand("toggleSeatbelt", function()
+RegisterCommand('toggleSeatbelt', function()
     local ped = PlayerPedId()
-    local vehicle = GetVehiclePedIsIn(ped, false)
 
     -- Only allow toggling if in a vehicle
     if IsPedInAnyVehicle(ped, false) then
         seatbeltOn = not seatbeltOn
-        -- Only send seatbelt message and play sound if the status actually changed by the toggle command
+        -- Only send seatbelt message and play sound if the status actually changed
         if seatbeltOn ~= lastSeatbeltStatus then
             SendNUIMessage({
-                type = "seatbelt",
+                type = 'seatbelt',
                 status = seatbeltOn,
-                playSound = seatbeltOn and "buckle" or "unbuckle"
+                playSound = seatbeltOn and 'buckle' or 'unbuckle'
             })
             lastSeatbeltStatus = seatbeltOn
 
-            -- Add notification here
             if seatbeltOn then
                 notify('success', 'HUD', 'Seatbelt ON')
             else
@@ -112,125 +142,120 @@ RegisterCommand("toggleSeatbelt", function()
     end
 end, false)
 
--- Use the keybind from config.lua for seatbelt
-RegisterKeyMapping("toggleSeatbelt", "Toggle Seatbelt", "keyboard", Config.ToggleSeatbeltKey)
+RegisterKeyMapping('toggleSeatbelt', 'Toggle Seatbelt', 'keyboard', Config.ToggleSeatbeltKey)
 
 -- Register command to open HUD settings menu
-RegisterCommand("hudsettings", function()
-    SetNuiFocus(true, true) -- Set NUI focus to true to allow interaction with the UI
+RegisterCommand('hudsettings', function()
+    SetNuiFocus(true, true)
     SendNUIMessage({
-        type = "openSettings",
-        settings = currentHudSettings -- Send current settings to populate sliders
+        type = 'openSettings',
+        settings = currentHudSettings
     })
 end, false)
 
--- Use the keybind from config.lua HUD settings
-RegisterKeyMapping("hudsettings", "Open HUD Settings", "keyboard", Config.HUDSettings)
+RegisterKeyMapping('hudsettings', 'Open HUD Settings', 'keyboard', Config.HUDSettings)
 
 -- NUI Callbacks
-RegisterNuiCallback("saveHudSettings", function(data, cb)
+RegisterNuiCallback('saveHudSettings', function(data, cb)
     saveHudSettings(data)
-    cb('ok') -- Respond to the NUI callback
+    cb('ok')
 end)
 
-RegisterNuiCallback("resetHudSettings", function(data, cb)
+RegisterNuiCallback('resetHudSettings', function(data, cb)
     resetHudSettings()
-    cb('ok') -- Respond to the NUI callback
-end)
-
-RegisterNuiCallback("closeUI", function(data, cb)
-    SetNuiFocus(false, false) -- Release NUI focus when UI is closed
     cb('ok')
 end)
 
-RegisterNuiCallback("uiReady", function(data, cb)
-    -- This callback is fired when the UI is ready to receive messages
-    loadHudSettings() -- Load and apply settings as soon as UI is ready
+RegisterNuiCallback('closeUI', function(data, cb)
+    SetNuiFocus(false, false)
     cb('ok')
 end)
 
--- Main HUD update loop
+RegisterNuiCallback('uiReady', function(data, cb)
+    loadHudSettings()
+    cb('ok')
+end)
+
+-- Last payload actually sent to the NUI, so we can skip redundant
+-- SendNUIMessage/postMessage calls when nothing the player would see changed
+-- (e.g. idling with a full tank and no RPM movement).
+local lastSent = {
+    display = nil, speed = nil, fuel = nil, engine = nil,
+    seatbelt = nil, gear = nil, rpm = nil, mileage = nil
+}
+
+local wasInVehicle = false
+local lastSpeed = 0
+
+-- Single merged loop: HUD data push + seatbelt/ejection logic.
+-- Previously these were two separate CreateThread loops each doing their own
+-- PlayerPedId()/GetVehiclePedIsIn() native calls at similar rates - merged
+-- here to halve those native calls and the thread/Wait overhead per tick.
 CreateThread(function()
     while true do
-        Wait(Config.RefreshRate) -- Use Config.RefreshRate for HUD updates
+        Wait(Config.RefreshRate)
 
         -- Hide NUI while pause menu / map is open (ESC -> Map)
         local paused = IsPauseMenuActive()
         if paused then
             if not uiHiddenByPause then
                 uiHiddenByPause = true
-                SendNUIMessage({ type = "pause", active = true })
-                -- Force-hide the HUD immediately (in case it was showing)
-                SendNUIMessage({ type = "hud", display = false })
+                SendNUIMessage({ type = 'pause', active = true })
+                SendNUIMessage({ type = 'hud', display = false })
+                lastSent.display = false
             end
             goto continue
-        else
-            if uiHiddenByPause then
-                uiHiddenByPause = false
-                SendNUIMessage({ type = "pause", active = false })
-            end
+        elseif uiHiddenByPause then
+            uiHiddenByPause = false
+            SendNUIMessage({ type = 'pause', active = false })
         end
 
         local ped = PlayerPedId()
-        local vehicle = GetVehiclePedIsIn(ped, false)
+        local inVehicle = IsPedInAnyVehicle(ped, false)
 
-        if IsPedInAnyVehicle(ped, false) then
-            local speed = math.floor(GetEntitySpeed(vehicle) * 2.23694)
-            local fuel = exports["LegacyFuel"]:GetFuel(vehicle)
+        if inVehicle then
+            local vehicle = GetVehiclePedIsIn(ped, false)
+            wasInVehicle = true
+
+            local currentSpeed = GetEntitySpeed(vehicle)
+            local speed = math.floor(currentSpeed * 2.23694)
+            local fuel = LegacyFuel:GetFuel(vehicle)
             local gear = GetVehicleCurrentGear(vehicle)
             local rpm = math.floor(GetVehicleCurrentRpm(vehicle) * 10000)
+            local enginePercent = GetVehicleEngineHealth(vehicle) / 10
+            local mileage = getMileage(GetGameTimer())
 
-            -- Get engine health (0-1000 range) and convert to percentage
-            local engineHealth = GetVehicleEngineHealth(vehicle)
-            local enginePercent = (engineHealth / 10)
+            -- Only touch the NUI bridge when something actually changed.
+            if lastSent.display ~= true or speed ~= lastSent.speed or fuel ~= lastSent.fuel
+                or enginePercent ~= lastSent.engine or seatbeltOn ~= lastSent.seatbelt
+                or gear ~= lastSent.gear or rpm ~= lastSent.rpm or mileage ~= lastSent.mileage then
 
-            -- jg-vehiclemileage: distance travelled by this vehicle
-            getMileageUnit()
-            local mileage = 0
-            local ok, mileageKm = pcall(function()
-                return exports["jg-vehiclemileage"]:getMileage()
-            end)
-            if ok and mileageKm then
-                mileage = (mileageUnit == "kilometers") and mileageKm or (mileageKm * 0.621371)
-                mileage = math.floor(mileage)
+                SendNUIMessage({
+                    type = 'hud',
+                    display = true,
+                    speed = speed,
+                    fuel = fuel,
+                    engine = enginePercent,
+                    seatbelt = seatbeltOn,
+                    gear = gear,
+                    rpm = rpm,
+                    mileage = mileage,
+                    mileageUnit = mileageUnitAbbr
+                })
+
+                lastSent.display = true
+                lastSent.speed = speed
+                lastSent.fuel = fuel
+                lastSent.engine = enginePercent
+                lastSent.seatbelt = seatbeltOn
+                lastSent.gear = gear
+                lastSent.rpm = rpm
+                lastSent.mileage = mileage
             end
-
-            SendNUIMessage({
-                type = "hud",
-                display = true,
-                speed = speed,
-                fuel = fuel,
-                engine = enginePercent, -- New data sent to UI
-                seatbelt = seatbeltOn,
-                gear = gear,
-                rpm = rpm,
-                mileage = mileage,
-                mileageUnit = mileageUnitAbbr
-            })
-        else
-            SendNUIMessage({type = "hud", display = false})
-        end
-
-        ::continue::
-    end
-end)
-local wasInVehicle = false
-local lastSpeed = 0
-
--- Seatbelt and ejection logic
-CreateThread(function()
-    while true do
-        Wait(100)
-        local ped = PlayerPedId()
-        local vehicle = GetVehiclePedIsIn(ped, false)
-
-        if IsPedInAnyVehicle(ped, false) then
-            wasInVehicle = true
-            local currentSpeed = GetEntitySpeed(vehicle)
 
             -- Prevent player from exiting vehicle if seatbelt is on
             if seatbeltOn then
-                DisableControlAction(0, 75, true) -- Disable "Leave Vehicle" control (0 is for INPUTGROUP_VEHICLE, 75 is INPUT_VEHICLE_EXIT)
+                DisableControlAction(0, 75, true) -- INPUTGROUP_VEHICLE / INPUT_VEHICLE_EXIT
             end
 
             -- Eject player if seatbelt is off and there's a rapid deceleration
@@ -248,13 +273,16 @@ CreateThread(function()
             lastSpeed = currentSpeed
         else
             if wasInVehicle then
-                -- Only set seatbeltOn to false and play sound if it was previously on
+                if lastSent.display ~= false then
+                    SendNUIMessage({ type = 'hud', display = false })
+                    lastSent.display = false
+                end
                 if seatbeltOn then
                     seatbeltOn = false
                     SendNUIMessage({
-                        type = "seatbelt",
+                        type = 'seatbelt',
                         status = seatbeltOn,
-                        playSound = "unbuckle"
+                        playSound = 'unbuckle'
                     })
                     lastSeatbeltStatus = seatbeltOn
                     notify('error', 'HUD', 'Seatbelt OFF (Left Vehicle)')
@@ -263,13 +291,7 @@ CreateThread(function()
             wasInVehicle = false
             lastSpeed = 0
         end
-    end
-end)
 
--- Initial load of HUD settings when the script starts
-AddEventHandler('onResourceStart', function(resourceName)
-    if (GetCurrentResourceName() == resourceName) then
-        -- We need to wait for the UI to be ready before sending settings
-        -- The "uiReady" NUI callback will trigger loadHudSettings
+        ::continue::
     end
 end)
