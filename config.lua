@@ -25,7 +25,7 @@ Config.KvpKey = 'DANIELGDM180_hud_hud_settings'
 
 -- Default HUD position/scale, used on first run and by the "Reset" button in the settings menu
 Config.DefaultHudSettings = {
-    scale = 0.84,
+    scale = 0.80,
     bottom = 2,
     left = 91
 }

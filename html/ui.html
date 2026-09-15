@@ -11,16 +11,16 @@
       --red-dim: #8a0f0f;
       --red-glow: rgba(255, 43, 43, 0.55);
       --panel: rgba(8, 8, 10, 0.82);
-      --panel-edge: rgba(255, 127, 17, 0.55);
+      --panel-edge: rgba(255, 43, 43, 0.55);
       --text: #f2f2f2;
       --text-dim: #9a9a9a;
       --green: #26d97a;
 
-      /* Classic automotive palette — scoped to the speedometer gauge only */
-      --gauge-accent: #ff7f11;
-      --gauge-accent-dim: #7a3d00;
-      --gauge-accent-glow: rgba(255, 127, 17, 0.55);
-      --gauge-edge: rgba(255, 127, 17, 0.35);
+      /* Gauge accent — matches the red/black brand theme */
+      --gauge-accent: #ff2b2b;
+      --gauge-accent-dim: #8a0f0f;
+      --gauge-accent-glow: rgba(255, 43, 43, 0.55);
+      --gauge-edge: rgba(255, 43, 43, 0.35);
       --gauge-white: #f5f5f2;
     }
 
@@ -56,7 +56,7 @@
       border-radius: 50%;
       border: 2px solid var(--gauge-edge);
       box-shadow:
-        0 0 18px rgba(255, 127, 17, 0.25),
+        0 0 18px rgba(255, 43, 43, 0.25),
         inset 0 0 24px rgba(0, 0, 0, 0.75);
       overflow: hidden;
     }
@@ -86,7 +86,7 @@
     }
     .rpm-track {
       fill: none;
-      stroke: rgba(255, 127, 17, 0.18);
+      stroke: rgba(255, 43, 43, 0.18);
       stroke-width: 5;
     }
     .rpm-fill {
@@ -207,15 +207,6 @@
     .fuel-fill { background: linear-gradient(90deg, #ffbf00, #ff8a00); }
     .engine-fill { background: linear-gradient(90deg, var(--green), #05c02e); }
 
-    .stat-pct {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 11px;
-      color: var(--text-dim);
-      width: 32px;
-      text-align: right;
-      flex-shrink: 0;
-    }
-
     .odo-row {
       justify-content: space-between;
       padding-top: 10px;
@@ -321,12 +312,10 @@
     <div class="stat-row">
       <img src="fuel-icon.png" alt="Fuel" class="stat-icon" />
       <div class="stat-bar"><div class="stat-fill fuel-fill" id="fuelBar"></div></div>
-      <div class="stat-pct" id="fuelPct">100%</div>
     </div>
     <div class="stat-row">
       <img src="engine-icon.png" alt="Engine" class="stat-icon" />
       <div class="stat-bar"><div class="stat-fill engine-fill" id="engineBar"></div></div>
-      <div class="stat-pct" id="enginePct">100%</div>
     </div>
     <div class="stat-row odo-row">
       <div class="odo-label">MI</div>
@@ -495,14 +484,18 @@
     });
 
     document.getElementById("reset-settings").addEventListener("click", () => {
-      const defaultSettings = { scale: 1.0, bottom: 5, left: 90 };
-      applyHudSettings(defaultSettings);
-      currentHudSettings = { ...defaultSettings };
+      // Ask the client script for the real Config.DefaultHudSettings instead
+      // of guessing values here — those two used to disagree.
       fetch(`https://${GetParentResourceName()}/resetHudSettings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json; charset=UTF-8' },
         body: JSON.stringify({}),
-      });
+      })
+        .then((r) => r.json())
+        .then((defaultSettings) => {
+          applyHudSettings(defaultSettings);
+          currentHudSettings = { ...defaultSettings };
+        });
       hudSettings.style.display = "none";
       fetch(`https://${GetParentResourceName()}/closeUI`, {
         method: 'POST',
@@ -522,16 +515,14 @@
 
     const mphEl = document.getElementById("mph");
     const fuelBarEl = document.getElementById("fuelBar");
-    const fuelPctEl = document.getElementById("fuelPct");
     const engineBarEl = document.getElementById("engineBar");
-    const enginePctEl = document.getElementById("enginePct");
     const seatbeltEl = document.getElementById("seatbelt");
     const gearEl = document.getElementById("gear");
     const odoValueEl = document.getElementById("odoValue");
 
     let last = {
       display: null, speed: null, rpm: null, fuel: null, engine: null,
-      engineLow: null, seatbelt: null, gear: null, mileage: null
+      engineLow: null, seatbelt: null, gear: null, reverse: null, mileage: null
     };
 
     window.addEventListener("message", function (event) {
@@ -557,14 +548,12 @@
           const fuel = Math.max(0, Math.min(100, data.fuel));
           if (fuel !== last.fuel) {
             fuelBarEl.style.width = `${fuel}%`;
-            fuelPctEl.innerText = `${Math.round(fuel)}%`;
             last.fuel = fuel;
           }
 
           const engine = Math.max(0, Math.min(100, data.engine));
           if (engine !== last.engine) {
             engineBarEl.style.width = `${engine}%`;
-            enginePctEl.innerText = `${Math.round(engine)}%`;
             const engineLow = engine < 30;
             if (engineLow !== last.engineLow) {
               engineBarEl.style.background = engineLow ? '#ff2b2b' : '';
@@ -579,9 +568,13 @@
             last.seatbelt = data.seatbelt;
           }
 
-          if (data.gear !== last.gear) {
-            gearEl.innerText = data.gear === 0 ? "R" : (data.gear === -1 ? "P" : data.gear);
+          if (data.gear !== last.gear || data.reverse !== last.reverse) {
+            // gear 0 covers both reverse and neutral/parked — use the
+            // reverse flag from client.lua (based on actual velocity) to
+            // tell them apart instead of always showing "R".
+            gearEl.innerText = data.gear === 0 ? (data.reverse ? "R" : "N") : data.gear;
             last.gear = data.gear;
+            last.reverse = data.reverse;
           }
 
           if (data.mileage !== last.mileage) {

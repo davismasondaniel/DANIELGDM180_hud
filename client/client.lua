@@ -163,7 +163,9 @@ end)
 
 RegisterNuiCallback('resetHudSettings', function(data, cb)
     resetHudSettings()
-    cb('ok')
+    -- Return the actual default settings so the UI applies the same values
+    -- that were just persisted, instead of the UI's own hardcoded guess.
+    cb(defaultHudSettings)
 end)
 
 RegisterNuiCallback('closeUI', function(data, cb)
@@ -181,7 +183,7 @@ end)
 -- (e.g. idling with a full tank and no RPM movement).
 local lastSent = {
     display = nil, speed = nil, fuel = nil, engine = nil,
-    seatbelt = nil, gear = nil, rpm = nil, mileage = nil
+    seatbelt = nil, gear = nil, reverse = nil, rpm = nil, mileage = nil
 }
 
 local wasInVehicle = false
@@ -225,10 +227,21 @@ CreateThread(function()
             local enginePercent = GetVehicleEngineHealth(vehicle) / 10
             local mileage = getMileage(GetGameTimer())
 
+            -- GetVehicleCurrentGear returns 0 for BOTH reverse and neutral/parked,
+            -- so gear alone can't tell them apart. Use the local-space speed
+            -- vector's y-component to detect whether the vehicle is actually
+            -- moving backwards.
+            local reverse = false
+            if gear == 0 then
+                local localSpeed = GetEntitySpeedVector(vehicle, true)
+                reverse = localSpeed.y < -0.5
+            end
+
             -- Only touch the NUI bridge when something actually changed.
             if lastSent.display ~= true or speed ~= lastSent.speed or fuel ~= lastSent.fuel
                 or enginePercent ~= lastSent.engine or seatbeltOn ~= lastSent.seatbelt
-                or gear ~= lastSent.gear or rpm ~= lastSent.rpm or mileage ~= lastSent.mileage then
+                or gear ~= lastSent.gear or reverse ~= lastSent.reverse
+                or rpm ~= lastSent.rpm or mileage ~= lastSent.mileage then
 
                 SendNUIMessage({
                     type = 'hud',
@@ -238,6 +251,7 @@ CreateThread(function()
                     engine = enginePercent,
                     seatbelt = seatbeltOn,
                     gear = gear,
+                    reverse = reverse,
                     rpm = rpm,
                     mileage = mileage,
                     mileageUnit = mileageUnitAbbr
@@ -249,6 +263,7 @@ CreateThread(function()
                 lastSent.engine = enginePercent
                 lastSent.seatbelt = seatbeltOn
                 lastSent.gear = gear
+                lastSent.reverse = reverse
                 lastSent.rpm = rpm
                 lastSent.mileage = mileage
             end
