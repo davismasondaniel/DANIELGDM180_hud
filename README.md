@@ -39,7 +39,7 @@ Vehicle HUD — circular speedometer/RPM gauge, fuel and engine health bars, liv
 | `Config.ToggleSeatbeltKey` | `'B'` | Keybind to toggle the seatbelt. |
 | `Config.HUDSettings` | `''` (unbound) | Keybind to open the HUD settings menu. |
 | `Config.RefreshRate` | `100` (ms) | HUD data push interval. Lower = smoother, more resource intensive. |
-| `Config.KvpKey` | `'DANIELGDM180_hud_hud_settings'` | KVP namespace used to persist each player's HUD position/scale. |
+| `Config.KvpKey` | `'change me'` | KVP namespace used to persist each player's HUD position/scale. |
 | `Config.DefaultHudSettings` | `scale 0.80, bottom 2, left 91` | Default HUD position/scale on first run and when a player hits "Reset" in the settings menu. |
 
 ## Commands & Keybinds

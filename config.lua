@@ -21,7 +21,7 @@ Config.HUDSettings = ''
 
 -- KVP key used to persist HUD position/scale settings (per-player, via SetResourceKvp)
 -- Change this if it clashes with another resource's KVP namespace
-Config.KvpKey = 'DANIELGDM180_hud_hud_settings'
+Config.KvpKey = 'change me'
 
 -- Default HUD position/scale, used on first run and by the "Reset" button in the settings menu
 Config.DefaultHudSettings = {
