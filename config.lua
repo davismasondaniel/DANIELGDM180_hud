@@ -3,6 +3,17 @@
 
 Config = {}
 
+-- Notification system used by this resource
+-- 'ox_lib'     = ox_lib lib.notify
+-- 'okokNotify' = okokNotify Alert export (make sure okokNotify is started before this resource)
+Config.Notify = 'ox_lib'
+
+-- How long notifications stay on screen in ms (okokNotify only; ox_lib uses its own default)
+Config.NotifyDuration = 5000
+
+-- Play okokNotify's notification sound (okokNotify only)
+Config.NotifySound = true
+
 -- Keybind for toggling the seatbelt
 -- Default: "B" (keyboard)
 -- You can find a list of FiveM keybinds here: https://docs.fivem.net/docs/game-references/controls/

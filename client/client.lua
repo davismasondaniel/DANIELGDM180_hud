@@ -55,12 +55,27 @@ local function getMileage(now)
     return cachedMileage
 end
 
+-- Notification wrapper. Backend is chosen in config.lua (Config.Notify):
+--   'ox_lib'     -> lib.notify
+--   'okokNotify' -> exports['okokNotify']:Alert
+-- Callers use: success | error | warning | inform (or info)
 local function notify(type, title, description)
-    lib.notify({
-        title = title or 'Vehicle',
-        description = description,
-        type = type or 'inform' -- success | error | warning | inform
-    })
+    title = title or 'Vehicle'
+    type = type or 'inform'
+
+    if Config.Notify == 'okokNotify' then
+        -- okokNotify types: success | info | error | warning
+        local okType = (type == 'inform') and 'info' or type
+        exports['okokNotify']:Alert(title, description or '', Config.NotifyDuration or 5000, okType, Config.NotifySound ~= false)
+    else
+        -- ox_lib types: success | error | warning | inform
+        local oxType = (type == 'info') and 'inform' or type
+        lib.notify({
+            title = title,
+            description = description,
+            type = oxType
+        })
+    end
 end
 
 -- Force the player into ragdoll for a duration (ms). Re-applies periodically
