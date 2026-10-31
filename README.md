@@ -17,9 +17,9 @@ Vehicle HUD — circular speedometer/RPM gauge, fuel and engine health bars, liv
 ## Dependencies
 
 - [`ox_lib`](https://github.com/overextended/ox_lib)
-- [`LegacyFuel`](https://github.com/Drift91/LegacyFuelEdit)
+- [`LegacyFuel`](https://github.com/davismasondaniel/LegacyFuel)
+- [jg-vehiclemileage] use this one if vMenu (https://github.com/davismasondaniel/jg-vehiclemileage) or (https://github.com/jgscripts/jg-vehiclemileage) for QBCore, QBox & ESX
 - [`okokNotify`](https://okok.tebex.io/package/4724993) *(optional, only if `Config.Notify = 'okokNotify'`)*
-- [jg-vehiclemileage] use this one if vMenu (https://github.com/davismasondaniel/jg-vehiclemileage) or (https://github.com/jgscripts/jg-vehiclemileage)
 
 ## Installation
 
