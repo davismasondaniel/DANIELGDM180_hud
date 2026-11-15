@@ -42,7 +42,6 @@
       flex-direction: row;
       align-items: flex-end;
       gap: 14px;
-      transition: all 0.1s ease-out;
     }
 
     /* ---------- Gauge cluster ---------- */
@@ -58,7 +57,7 @@
       box-shadow:
         0 0 18px rgba(255, 43, 43, 0.25),
         inset 0 0 24px rgba(0, 0, 0, 0.75);
-      overflow: hidden;
+      contain: layout style;
     }
 
     .gauge-svg {
@@ -94,8 +93,16 @@
       stroke: var(--gauge-accent);
       stroke-width: 5;
       stroke-linecap: round;
-      filter: drop-shadow(0 0 4px var(--gauge-accent-glow));
-      transition: stroke-dasharray 0.08s linear;
+      transition: stroke-dasharray 0.1s linear;
+    }
+    
+    .rpm-glow {
+      fill: none;
+      stroke: var(--gauge-accent-glow);
+      stroke-width: 11;
+      stroke-linecap: round;
+      opacity: 0.35;
+      transition: stroke-dasharray 0.1s linear;
     }
 
     .gauge-readout {
@@ -112,7 +119,6 @@
       font-weight: 700;
       color: var(--gauge-white);
       line-height: 1;
-      text-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
     }
     .speed-unit {
       font-family: 'Share Tech Mono', monospace;
@@ -185,7 +191,6 @@
       width: 18px;
       height: 18px;
       flex-shrink: 0;
-      filter: drop-shadow(0 0 2px rgba(255,43,43,0.5));
       opacity: 0.9;
     }
 
@@ -198,10 +203,13 @@
       overflow: hidden;
     }
 
+    /* Scaled with transform (compositor) instead of width (layout) */
     .stat-fill {
       height: 100%;
       width: 100%;
-      transition: width 0.15s ease-out, background 0.15s ease-out;
+      transform-origin: left center;
+      transform: scaleX(1);
+      transition: transform 0.15s ease-out;
     }
 
     .fuel-fill { background: linear-gradient(90deg, #ffbf00, #ff8a00); }
@@ -327,6 +335,7 @@
     <svg class="gauge-svg" viewBox="0 0 220 220">
       <!-- RPM outer ring -->
       <circle class="rpm-track" id="rpmTrack" cx="110" cy="110" r="102"></circle>
+      <circle class="rpm-glow" id="rpmGlow" cx="110" cy="110" r="102"></circle>
       <circle class="rpm-fill" id="rpmArc" cx="110" cy="110" r="102"></circle>
 
       <!-- Ticks injected by JS -->
@@ -391,6 +400,7 @@
 
     const rpmArc = document.getElementById("rpmArc");
     const rpmTrack = document.getElementById("rpmTrack");
+    const rpmGlow = document.getElementById("rpmGlow");
     const ticksGroup = document.getElementById("ticks");
 
     // Rotate the circle's natural dash-start (3 o'clock) to line up with our
@@ -400,6 +410,7 @@
     rpmTrack.setAttribute('transform', `rotate(${ARC_ROTATE} ${CX} ${CY})`);
     rpmTrack.setAttribute('stroke-dasharray', `${ARC_LEN.toFixed(1)} ${(CIRC - ARC_LEN).toFixed(1)}`);
     rpmArc.setAttribute('transform', `rotate(${ARC_ROTATE} ${CX} ${CY})`);
+    rpmGlow.setAttribute('transform', `rotate(${ARC_ROTATE} ${CX} ${CY})`);
 
     function polar(cx, cy, r, angleDeg) {
       const rad = (angleDeg - 90) * (Math.PI / 180);
@@ -431,7 +442,9 @@
       const clamped = Math.max(0, Math.min(rpm, MAX_RPM));
       const frac = clamped / MAX_RPM;
       const dash = frac * ARC_LEN;
-      rpmArc.setAttribute('stroke-dasharray', `${dash.toFixed(1)} ${(CIRC - dash).toFixed(1)}`);
+      const da = `${dash.toFixed(1)} ${(CIRC - dash).toFixed(1)}`;
+      rpmArc.setAttribute('stroke-dasharray', da);
+      rpmGlow.setAttribute('stroke-dasharray', da);
     }
 
     function applyHudSettings(settings) {
@@ -547,13 +560,13 @@
 
           const fuel = Math.max(0, Math.min(100, data.fuel));
           if (fuel !== last.fuel) {
-            fuelBarEl.style.width = `${fuel}%`;
+            fuelBarEl.style.transform = `scaleX(${fuel / 100})`;
             last.fuel = fuel;
           }
 
           const engine = Math.max(0, Math.min(100, data.engine));
           if (engine !== last.engine) {
-            engineBarEl.style.width = `${engine}%`;
+            engineBarEl.style.transform = `scaleX(${engine / 100})`;
             const engineLow = engine < 30;
             if (engineLow !== last.engineLow) {
               engineBarEl.style.background = engineLow ? '#ff2b2b' : '';
