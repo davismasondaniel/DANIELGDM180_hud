@@ -4,7 +4,7 @@ lua54 'yes'
 
 author 'DANIELGDM180'
 description 'Vehicle HUD with speedometer, RPM, fuel, engine health, seatbelt/ejection system, and live odometer'
-version '2.0.0'
+version '2.1.0'
 
 ui_page 'html/ui.html'
 
