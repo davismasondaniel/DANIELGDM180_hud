@@ -55,27 +55,12 @@ local function getMileage(now)
     return cachedMileage
 end
 
--- Notification wrapper. Backend is chosen in config.lua (Config.Notify):
---   'ox_lib'     -> lib.notify
---   'okokNotify' -> exports['okokNotify']:Alert
--- Callers use: success | error | warning | inform (or info)
 local function notify(type, title, description)
-    title = title or 'Vehicle'
-    type = type or 'inform'
-
-    if Config.Notify == 'okokNotify' then
-        -- okokNotify types: success | info | error | warning
-        local okType = (type == 'inform') and 'info' or type
-        exports['okokNotify']:Alert(title, description or '', Config.NotifyDuration or 5000, okType, Config.NotifySound ~= false)
-    else
-        -- ox_lib types: success | error | warning | inform
-        local oxType = (type == 'info') and 'inform' or type
-        lib.notify({
-            title = title,
-            description = description,
-            type = oxType
-        })
-    end
+    lib.notify({
+        title = title or 'Vehicle',
+        description = description,
+        type = type or 'inform' -- success | error | warning | inform
+    })
 end
 
 -- Force the player into ragdoll for a duration (ms). Re-applies periodically
@@ -203,7 +188,6 @@ local lastSent = {
 
 local wasInVehicle = false
 local lastSpeed = 0
-local sleep = Config.RefreshRate
 
 -- Single merged loop: HUD data push + seatbelt/ejection logic.
 -- Previously these were two separate CreateThread loops each doing their own
@@ -211,12 +195,11 @@ local sleep = Config.RefreshRate
 -- here to halve those native calls and the thread/Wait overhead per tick.
 CreateThread(function()
     while true do
-        Wait(sleep)
+        Wait(Config.RefreshRate)
 
         -- Hide NUI while pause menu / map is open (ESC -> Map)
         local paused = IsPauseMenuActive()
         if paused then
-            sleep = 250
             if not uiHiddenByPause then
                 uiHiddenByPause = true
                 SendNUIMessage({ type = 'pause', active = true })
@@ -233,16 +216,15 @@ CreateThread(function()
         local inVehicle = IsPedInAnyVehicle(ped, false)
 
         if inVehicle then
-            sleep = Config.RefreshRate
             local vehicle = GetVehiclePedIsIn(ped, false)
             wasInVehicle = true
 
             local currentSpeed = GetEntitySpeed(vehicle)
             local speed = math.floor(currentSpeed * 2.23694)
-            local fuel = math.floor((LegacyFuel:GetFuel(vehicle) or 0) + 0.5)
+            local fuel = LegacyFuel:GetFuel(vehicle)
             local gear = GetVehicleCurrentGear(vehicle)
-            local rpm = math.floor(GetVehicleCurrentRpm(vehicle) * 100 + 0.5) * 100
-            local enginePercent = math.floor(GetVehicleEngineHealth(vehicle) / 10 + 0.5)
+            local rpm = math.floor(GetVehicleCurrentRpm(vehicle) * 10000)
+            local enginePercent = GetVehicleEngineHealth(vehicle) / 10
             local mileage = getMileage(GetGameTimer())
 
             -- GetVehicleCurrentGear returns 0 for BOTH reverse and neutral/parked,
@@ -286,6 +268,11 @@ CreateThread(function()
                 lastSent.mileage = mileage
             end
 
+            -- Prevent player from exiting vehicle if seatbelt is on
+            if seatbeltOn then
+                DisableControlAction(0, 75, true) -- INPUTGROUP_VEHICLE / INPUT_VEHICLE_EXIT
+            end
+
             -- Eject player if seatbelt is off and there's a rapid deceleration
             if not seatbeltOn and currentSpeed < lastSpeed - 10.0 and lastSpeed > 20.0 then
                 local coords = GetEntityCoords(ped)
@@ -300,7 +287,6 @@ CreateThread(function()
 
             lastSpeed = currentSpeed
         else
-            sleep = 250
             if wasInVehicle then
                 if lastSent.display ~= false then
                     SendNUIMessage({ type = 'hud', display = false })
@@ -322,16 +308,5 @@ CreateThread(function()
         end
 
         ::continue::
-    end
-end)
-
-CreateThread(function()
-    while true do
-        if seatbeltOn then
-            DisableControlAction(0, 75, true) -- INPUT_VEHICLE_EXIT
-            Wait(0)
-        else
-            Wait(250)
-        end
     end
 end)

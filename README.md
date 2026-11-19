@@ -10,7 +10,6 @@ Vehicle HUD — circular speedometer/RPM gauge, fuel and engine health bars, liv
 - **Live odometer** — pulled from `jg-vehiclemileage`, auto-detects miles/km and refreshes every 500ms (decoupled from the main HUD refresh rate).
 - **Seatbelt system** — toggle key, blocks vehicle exit while buckled, and ejects the player (with ragdoll) on rapid deceleration while unbuckled.
 - **HUD settings menu** — in-game sliders for scale, vertical, and horizontal position, saved per-player via KVP and restored on join.
-- **Selectable notifications** — choose `ox_lib` or `okokNotify` in `config.lua`.
 - **Pause-menu aware** — HUD hides automatically when the pause menu/map is open.
 - **Performance-conscious client** — single merged thread for HUD push + seatbelt/ejection logic, NUI messages only sent when a displayed value actually changes, cached export handles.
 
@@ -19,7 +18,6 @@ Vehicle HUD — circular speedometer/RPM gauge, fuel and engine health bars, liv
 - [`ox_lib`](https://github.com/overextended/ox_lib)
 - [`LegacyFuel`](https://github.com/davismasondaniel/LegacyFuel)
 - [jg-vehiclemileage] use this one if vMenu (https://github.com/davismasondaniel/jg-vehiclemileage) or (https://github.com/jgscripts/jg-vehiclemileage) for QBCore, QBox & ESX
-- [`okokNotify`](https://okok.tebex.io/package/4724993) *(optional, only if `Config.Notify = 'okokNotify'`)*
 
 ## Installation
 
@@ -38,9 +36,6 @@ Vehicle HUD — circular speedometer/RPM gauge, fuel and engine health bars, liv
 
 | Setting | Default | Description |
 |---|---|---|
-| `Config.Notify` | `'ox_lib'` | Notification system: `'ox_lib'` or `'okokNotify'`. |
-| `Config.NotifyDuration` | `5000` (ms) | Notification duration (okokNotify only). |
-| `Config.NotifySound` | `true` | Play notification sound (okokNotify only). |
 | `Config.ToggleSeatbeltKey` | `'B'` | Keybind to toggle the seatbelt. |
 | `Config.HUDSettings` | `''` (unbound) | Keybind to open the HUD settings menu. |
 | `Config.RefreshRate` | `100` (ms) | HUD data push interval. Lower = smoother, more resource intensive. |
